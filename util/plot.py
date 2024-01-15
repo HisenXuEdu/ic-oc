@@ -1,16 +1,17 @@
-from dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
+import sys
+# from dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 import numpy as np
 import time
 from time import sleep
 import pandas as pd
 from visdom import Visdom
 import threading
-import sys
 
 
-    """主要是一些工具函数
 
-    """
+"""主要是一些工具函数
+
+"""
 
 def str2bool(v):
     """解析传入的参数是否为true
@@ -49,7 +50,7 @@ def plotp():
             pose.pop(0)
         viz.line(Y=pose, win='pose', opts=opts1)
 
-def plotfp(pose, force):
+def plotfp(viz,pose,force):
     """用visdom打印轨迹和力
     这种方式不太好，因为需要在主线程中进行调用
     Args:
@@ -58,7 +59,6 @@ def plotfp(pose, force):
     """
     force_list = []
     pose_list = []
-    viz = Visdom()
     opts1 = {
         "title": 'FORCE',
         "width":750,
@@ -73,17 +73,47 @@ def plotfp(pose, force):
         "legend":['x','y','z','r','p','y']
         
     }
-    while True:
+
+    sleep(0.01)
+    force_list.append([-force[1],-force[0],-force[2]])
+    # force_list.append([force[4],force[3],-force[5]])
+    pose_list.append([pose[0],pose[1],pose[2]])
+    # pose_list.append([current_actual[3]-179.488663,current_actual[4]+0.264109,current_actual[5]-179.605057])
+    if len(pose_list)>200:
+        force_list.pop(0)
+        pose_list.pop(0)
+    viz.line(Y=force_list, win='force', opts=opts1)
+    viz.line(Y=pose_list, win='pose', opts=opts2)
+
+
+class plotc():
+    def __init__(self,win_size=200,title='data'):
+        self.viz=Visdom()
+        self.data_list=[]
+        self.win=win_size
+        self.title=title
+        self.opts1 = {
+            "title": self.title,
+            "width":750,
+            "height":300,
+            "legend":['f1','f2','f3','f4','f5','f6'],
+            "ylim":[0, 50]
+        }
+        self.opts2 = {
+            "title": self.title,
+            "width":750,
+            "height":300,
+            "legend":['x','y','z','r','p','y']
+            
+        }
+
+    def plot(self,data):
+        self.data_list.append(data)
         sleep(0.01)
-        force_list.append([-force[1],-force[0],-force[2]])
-        # force_list.append([force[4],force[3],-force[5]])
-        pose_list.append([current_actual[0]-138.360397,current_actual[1]+472.066620,current_actual[2]-407.361847])
-        # pose_list.append([current_actual[3]-179.488663,current_actual[4]+0.264109,current_actual[5]-179.605057])
-        if len(pose_list)>200:
-            force_list.pop(0)
-            pose_list.pop(0)
-        viz.line(Y=force_list, win='force', opts=opts1)
-        viz.line(Y=pose_list, win='pose', opts=opts2)
+        if len(self.data_list)>self.win:
+            self.data_list.pop(0)
+        self.viz.line(Y=self.data_list, win=self.title, opts=self.opts1)
+        pass
 
 
 #传递参数分别为record和plot

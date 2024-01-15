@@ -49,7 +49,7 @@ def change_goal():
 if __name__ == '__main__':
     dashboard, move = ConnectRobot()
     dashboard.EnableRobot()
-    dashboard.SpeedFactor(60)
+    dashboard.SpeedFactor(80)
 
     s = force.connect_force()
     
@@ -60,9 +60,12 @@ if __name__ == '__main__':
 
     sleep(2)
 
-    initial_pose = [141.932007,-541.146973,171.485504,90.798767,0.044857,0.014894]
-    ic = IC(initial_pose =[initial_pose[0]/1000,initial_pose[1]/1000,initial_pose[2]/1000,initial_pose[3],initial_pose[4],initial_pose[5]])
+    initial_pose = [141.932007,-541.146973,391.485504,90.798767,0.044857,0.014894]
+    print(initial_pose)
+    move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
+    sleep(6)
 
+    ic = IC(initial_pose =[initial_pose[0]/1000,initial_pose[1]/1000,initial_pose[2]/1000,initial_pose[3],initial_pose[4],initial_pose[5]])
     while True:
         start_time = time.time()
         # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]

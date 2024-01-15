@@ -23,6 +23,11 @@ class IC():
 
         self.forward_force=forward_force
 
+
+        #limit
+        self.limit_min=[-1000,-1000,-1000,-1000,-1000,-1000]
+        self.limit_max=[1000,1000,1000,1000,1000,1000]
+
         # 计算循环的时间间隔
         # loop_rate = 20  # Hz
         loop_rate = 75 # Hz
@@ -54,7 +59,7 @@ class IC():
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
     
-    def compute_admittance_l(self, limit_min:np.ndarray, limit_max:np.ndarray, force=np.zeros(6)) -> tuple[np.ndarray, np.ndarray]:
+    def compute_admittance_l(self, force=np.zeros(6)) -> tuple[np.ndarray, np.ndarray]:
         """带限位单步计算导纳API
 
         Args:
@@ -77,17 +82,27 @@ class IC():
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
         self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
         pose = self.arm_desired_pose_[0:3] 
-        pose = self.__limit(pose,limit_min,limit_max) #这里仅实现了对xyz的限位
+        pose = self.__limit(pose) #这里仅实现了对xyz的限位
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
+    
+    def set_limit(self, limit_min:np.ndarray, limit_max:np.ndarray):
+        """设置限位
 
-    def __limit(self,val,min,max):  #__代表私有成员
+        Args:
+            limit_min (np.ndarray): 限位最小值
+            limit_max (np.ndarray): 限位最大值
+        """
+        self.limit_min=limit_min
+        self.limit_max=limit_max
+
+    def __limit(self,val):  #__代表私有成员
         for i in range(len(val)):
-            if val[i] < min[i]:
-                val[i] = min[i]
+            if val[i] < self.limit_min[i]:
+                val[i] = self.limit_min[i]
                 self.arm_desired_twist_[i] = 0
-            if val[i] > max[i]:
-                val[i] = max[i]
+            if val[i] > self.limit_max[i]:
+                val[i] = self.limit_max[i]
                 self.arm_desired_twist_[i] = 0
         return val
 

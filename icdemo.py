@@ -10,7 +10,7 @@ from ic.ic_class import IC
 import ic.force as force
 import threading
 from visdom import Visdom
-import util.plot
+from util.plot import *
 
 def ConnectRobot():
     try:
@@ -30,7 +30,7 @@ def ConnectRobot():
 def plot():
     #传递的第一个参数是是否写入文件，第二个参数是是否用visdom可视化，默认均不开启
     global force_,pose,euler
-    plotfd(force_,np.append(pose,euler))
+    plotfp(force_,np.append(pose,euler))
 
 
 def fsm(dmp,last_pose,goal=np.array([])):
@@ -90,8 +90,10 @@ if __name__ == '__main__':
     initial_pose = [138.360397,-472.066620,407.361847,-179.488663,0.264109,179.605057]
     initial_joint = [90.0, 0.0, 100.0, -10.0, -90.0, 0.0]
     print(initial_pose)
+    move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
+    sleep(5)
+
     ic = IC(initial_pose=[initial_pose[0] / 1000, initial_pose[1] / 1000, initial_pose[2] / 1000, initial_pose[3], initial_pose[4], initial_pose[5]])
-    
 
     if euler:
         while True:
