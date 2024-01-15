@@ -10,7 +10,7 @@ from ic.ic_class import IC
 import ic.force as force
 import threading
 from visdom import Visdom
-import util.util
+import util.plot
 
 def ConnectRobot():
     try:
@@ -27,9 +27,10 @@ def ConnectRobot():
         raise e
 
 
-def pose_open():
+def plot():
     #传递的第一个参数是是否写入文件，第二个参数是是否用visdom可视化，默认均不开启
-    os.system('python ./util/pose_record.py false true')
+    global force_,pose,euler
+    plotfd(force_,np.append(pose,euler))
 
 
 def fsm(dmp,last_pose,goal=np.array([])):
@@ -79,7 +80,7 @@ if __name__ == '__main__':
     force_thread.start()
 
     if plot:
-        record = threading.Thread(target=plotfd)
+        record = threading.Thread(target=plot)
         record.daemon = True
         record.start()
 
@@ -106,7 +107,7 @@ if __name__ == '__main__':
         while True:
             start_time = time.time()
             # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
-            force_ = [-force.force[1]/10,-force.force[0]/10,-force.force[2]/10,force.force[4]*10,force.force[3]*10,-force.force[5]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
+            force_ = [-force.force[1],-force.force[0],-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
             pose, euler = ic.compute_admittance(force_)
             print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
             move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])

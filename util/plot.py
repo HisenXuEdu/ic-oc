@@ -7,7 +7,14 @@ from visdom import Visdom
 import threading
 import sys
 
+
+    """主要是一些工具函数
+
+    """
+
 def str2bool(v):
+    """解析传入的参数是否为true
+    """
     return v.lower() in ("True", "true", "T", "t", "yes", "1")
     
 def ConnectRobot():
@@ -42,8 +49,13 @@ def plotp():
             pose.pop(0)
         viz.line(Y=pose, win='pose', opts=opts1)
 
-def plotfp():
-    global force,pose
+def plotfp(pose, force):
+    """用visdom打印轨迹和力
+    这种方式不太好，因为需要在主线程中进行调用
+    Args:
+        pose (np.ndarray): 六维位置
+        force (np.ndarray): 六维力
+    """
     force_list = []
     pose_list = []
     viz = Visdom()
