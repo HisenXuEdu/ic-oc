@@ -1,3 +1,5 @@
+import sys
+print(sys.path)
 from util.dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 from time import sleep
 import time
@@ -5,14 +7,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import os
-from ic.ic_class import IC
+from ic.ic import IC
 import ic.force as force
 import threading
 from visdom import Visdom
-from util.plot import *
+from util.plot import Plot
+from util.util import *
 
-def ConnectRobot():
+def connect_robot():
     try:
         ip = "192.168.5.1"
         dashboardPort = 29999
@@ -30,27 +32,12 @@ def ConnectRobot():
 def plot_viz():
     global force_,pose,euler,initial_pose
     sleep(3)
-    plt_force=plotc(200,'FORCE')
-    plt_pose=plotc(200,'POSE')
+    plt_force=Plot(200,'FORCE')
+    plt_pose=Plot(200,'POSE')
 
     while True:
         plt_force.plot(force_)
         plt_pose.plot(pose*1000-initial_pose[:3])
-
-
-def fsm(dmp,last_pose,goal=np.array([])):
-    pass
-    intial = last_pose
-    intial = np.array(intial)
-    dmp.y0 = intial
-    if(len(goal)!=0):
-        goal = np.array(goal)
-        dmp.goal = goal
-
-def change_goal():
-    #需要实现根据视觉变goal
-    pass
-
 
 if __name__ == '__main__':
     """
@@ -74,7 +61,7 @@ if __name__ == '__main__':
         plot = str2bool(args[2])
 
 
-    dashboard, move = ConnectRobot()
+    dashboard, move = connect_robot()
     dashboard.EnableRobot()
     dashboard.SpeedFactor(60)
     s = force.connect_force()

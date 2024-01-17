@@ -1,13 +1,17 @@
+import sys
+import os
+
+# 将父级目录加入到import的path中
+current_dir = os.path.dirname(__file__)
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
 import threading
-from dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
+from util.dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 from time import sleep
 import numpy as np
 import re
-import random
-import time
 from scipy.spatial.transform import Rotation
-import socket
-import struct
 
 globalLockValue = threading.Lock()
 enableStatus_robot = None

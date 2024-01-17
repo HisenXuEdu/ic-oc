@@ -1,13 +1,15 @@
-import threading
-from dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
+import sys
+import os
+
+# 将父级目录加入到import的path中
+current_dir = os.path.dirname(__file__)
+parent_dir = os.path.dirname(current_dir)
+sys.path.append(parent_dir)
+
+from util.dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 from time import sleep
-import time
 import numpy as np
-import re
-import random
 import pandas as pd
-import datetime
-import multiprocessing
 import os
 from pynput import keyboard
 

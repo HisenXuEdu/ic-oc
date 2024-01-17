@@ -6,13 +6,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import os
-from ic.ic_class import IC
+from ic.ic import IC
 import ic.force as force
 import threading
 
 
 
-def ConnectRobot():
+def connect_robot():
     try:
         ip = "192.168.5.1"
         dashboardPort = 29999
