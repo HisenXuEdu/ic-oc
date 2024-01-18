@@ -1,5 +1,5 @@
 import sys
-from dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
+from util.dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 import numpy as np
 import time
 from time import sleep
@@ -16,15 +16,15 @@ class Plot():
         self.title=title
         self.opts1 = {
             "title": self.title,
-            "width":750,
-            "height":300,
+            "width":1000,
+            "height":500,
             "legend":['f1','f2','f3','f4','f5','f6'],
             "ylim":[0, 50]
         }
         self.opts2 = {
             "title": self.title,
-            "width":750,
-            "height":300,
+            "width":1000,
+            "height":500,
             "legend":['x','y','z','r','p','y']
             
         }

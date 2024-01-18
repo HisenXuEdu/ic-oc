@@ -162,7 +162,7 @@ class DobotApi:
             print(text)
 
     def send_data(self, string):
-        self.log(f"Send to {self.ip}:{self.port}: {string}") 
+        # self.log(f"Send to {self.ip}:{self.port}: {string}") 
         try:
             self.socket_dobot.send(str.encode(string, 'utf-8'))
         except Exception as e:
@@ -182,7 +182,7 @@ class DobotApi:
                 data_str = data
             else:
                 data_str = str(data, encoding="utf-8")
-            self.log(f'Receive from {self.ip}:{self.port}: {data_str}')
+            # self.log(f'Receive from {self.ip}:{self.port}: {data_str}')
             return data_str
 
     def sendRecvMsg(self, string):

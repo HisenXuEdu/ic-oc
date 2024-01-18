@@ -1,3 +1,4 @@
+import sys
 from util.dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 from time import sleep
 import time
@@ -10,6 +11,7 @@ import ic.force as force
 import threading
 from visdom import Visdom
 from util.plot import Plot
+from util.util import *
 
 def connect_robot():
     try:
@@ -28,9 +30,9 @@ def connect_robot():
 
 def plot_viz():
     global force_,pose,euler,initial_pose
-    sleep(3)
-    plt_force=plotc(200,'FORCE')
-    plt_pose=plotc(200,'POSE')
+    sleep(12)
+    plt_force=Plot(200,'FORCE')
+    plt_pose=Plot(200,'POSE')
 
     while True:
         plt_force.plot(force_)
@@ -44,9 +46,9 @@ if __name__ == '__main__':
     euler:是否在旋转角度开启阻抗控制
     plot:是否将运动和力用visdom打印
     """
-    moving = False
+    moving = True
     euler = False
-    plot = False
+    plot = True
 
     args = sys.argv[1:]
     if len(args) == 1:
@@ -62,6 +64,8 @@ if __name__ == '__main__':
 
     dashboard, move = connect_robot()
     dashboard.EnableRobot()
+    dashboard.ClearError()
+    dashboard.SetSafeSkin(0)
     dashboard.SpeedFactor(60)
     s = force.connect_force()
     
@@ -71,7 +75,7 @@ if __name__ == '__main__':
     force_thread.start()
 
     if plot:
-        record = threading.Thread(target=plot)
+        record = threading.Thread(target=plot_viz)
         record.daemon = True
         record.start()
 

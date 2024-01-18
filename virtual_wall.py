@@ -1,6 +1,5 @@
 import sys
-print(sys.path)
-from util.dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
+from util.test import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 from time import sleep
 import time
 import numpy as np
@@ -31,7 +30,7 @@ def connect_robot():
 
 def plot_viz():
     global force_,pose,euler,initial_pose
-    sleep(3)
+    sleep(12)
     plt_force=Plot(200,'FORCE')
     plt_pose=Plot(200,'POSE')
 
@@ -63,7 +62,9 @@ if __name__ == '__main__':
 
     dashboard, move = connect_robot()
     dashboard.EnableRobot()
+    dashboard.ClearError()
     dashboard.SpeedFactor(60)
+    dashboard.SetSafeSkin(0)
     s = force.connect_force()
     
 
@@ -77,10 +78,11 @@ if __name__ == '__main__':
         record.start()
 
     initial_pose = [138.360397,-472.066620,407.361847,-179.488663,0.264109,179.605057]
+    # initial_pose = [-472.360397,-135.066620,407.361847,-179.488663,0.264109,89.605057]
     initial_joint = [90.0, 0.0, 100.0, -10.0, -90.0, 0.0]
     print(initial_pose)
     move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
-    sleep(2)
+    sleep(10)
 
     ic = IC(initial_pose=[initial_pose[0] / 1000, initial_pose[1] / 1000, initial_pose[2] / 1000, initial_pose[3], initial_pose[4], initial_pose[5]])
     limit_min=[(initial_pose[0]-100)/1000,(initial_pose[1]-100)/1000,(initial_pose[2]-100)/1000]

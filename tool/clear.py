@@ -63,5 +63,5 @@ if __name__ == '__main__':
         raise e
     dashboard.ClearError()
     sleep(0.01)
-    dashboard.Continue()
-    ClearRobotError(dashboard)
+    # dashboard.Continue()
+    # ClearRobotError(dashboard)

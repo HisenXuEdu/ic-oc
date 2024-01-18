@@ -106,10 +106,11 @@ class IC():
                 self.arm_desired_twist_[i] = 0
         return val
 
-    def change_para(self, m, d, k):
+    def change_para(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5]):
         self.M_ = np.diag(m)
         self.D_ = np.diag(d)
         self.K_ = np.diag(k)
+        # print(self.K_)
 
     def forward_force(self, force=np.zeros(6)):
         # m = [2,2,2,0.5,0.5,0.5]
