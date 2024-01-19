@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from ic.ic import IC
-import ic.force as force
+from ic.force import Force
 import threading
 from visdom import Visdom
 from util.plot import Plot
@@ -54,11 +54,10 @@ if __name__ == '__main__':
     dashboard.ClearError()
     dashboard.SpeedFactor(80)
     dashboard.SetSafeSkin(0)
-
-    s = force.connect_force()
     
+    force=Force()
 
-    force_thread = threading.Thread(target=force.get_force, args=(s,))
+    force_thread = threading.Thread(target=force.get_force)
     force_thread.daemon = True
     force_thread.start()
 
@@ -71,11 +70,11 @@ if __name__ == '__main__':
     initial_pose = [141.932007,-541.146973,391.485504,90.798767,0.044857,0.014894]
     print(initial_pose)
     move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
-    sleep(3)
+    move.Sync()
 
     ic = IC(initial_pose =[initial_pose[0]/1000,initial_pose[1]/1000,initial_pose[2]/1000,initial_pose[3],initial_pose[4],initial_pose[5]])
     ic.change_para(m = [200,2,200,200,2,2],d = [1200,25,1000,1200,12,12],k = [0,128,0,0,5,5])
-    ic.change_para(m = [200,0.2,200,200,2,2],d = [1200,8,1000,1200,12,12],k = [0,250,0,0,5,5])
+    # ic.change_para(m = [200,0.2,200,200,2,2],d = [1200,8,1000,1200,12,12],k = [0,250,0,0,5,5])
     while True:
         start_time = time.time()
         # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]

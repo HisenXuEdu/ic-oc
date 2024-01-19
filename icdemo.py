@@ -30,7 +30,7 @@ def connect_robot():
 
 def plot_viz():
     global force_,pose,euler,initial_pose
-    sleep(12)
+    sleep(2)
     plt_force=Plot(200,'FORCE')
     plt_pose=Plot(200,'POSE')
 
@@ -40,12 +40,14 @@ def plot_viz():
 
 
 def generate_move(ic,step):
+    i = 1
     while True:
         if ic.desired_pose_position_[1]>-0.38:
             i = -1
         if ic.desired_pose_position_[1]<-0.6:
             i = 1
-        ic.moving(ic.desired_pose_position_[1]+200/100000*i)
+        ic.move_single([ic.desired_pose_position_[0],ic.desired_pose_position_[1]+200/100000*i,ic.desired_pose_position_[2]])
+        sleep(step)
 
 
 if __name__ == '__main__':
@@ -79,28 +81,29 @@ if __name__ == '__main__':
 
     force=Force()
 
-    force_thread = threading.Thread(target=force.get_force, args=(s,))
+    force_thread = threading.Thread(target=force.get_force)
     force_thread.daemon = True
     force_thread.start()
+
+    initial_pose = [138.360397,-472.066620,407.361847,-179.488663,0.264109,179.605057]
+    initial_joint = [90.0, 0.0, 100.0, -10.0, -90.0, 0.0]
+    print(initial_pose)
+    move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
+    move.Sync()
+
+    ic = IC(initial_pose=[initial_pose[0] / 1000, initial_pose[1] / 1000, initial_pose[2] / 1000, initial_pose[3], initial_pose[4], initial_pose[5]])
 
     if plot:
         record = threading.Thread(target=plot_viz)
         record.daemon = True
         record.start()
- 
- 
-    initial_pose = [138.360397,-472.066620,407.361847,-179.488663,0.264109,179.605057]
-    initial_joint = [90.0, 0.0, 100.0, -10.0, -90.0, 0.0]
-    print(initial_pose)
-    move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
-    sleep(5)
-
-    ic = IC(initial_pose=[initial_pose[0] / 1000, initial_pose[1] / 1000, initial_pose[2] / 1000, initial_pose[3], initial_pose[4], initial_pose[5]])
 
     if moving:
-        move = threading.Thread(target=generate_move)
-        move.daemon = True
-        move.start(ic,0.01)
+        tra = threading.Thread(target=generate_move,args=(ic,0.01))
+        tra.daemon = True
+        tra.start()
+    
+    i = 1
 
     if euler:
         while True:

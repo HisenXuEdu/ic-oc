@@ -80,25 +80,30 @@ class Force():
     def __init__(self,ip='192.168.2.3',port=49152):
         self.ip=ip
         self.port=port
-        self.socket=self.connect_force()
+        self.socket=self.__connect_force()
         self.force=[0,0,0,0,0,0]
+        self.__init()
 
-    def connect_force(self):
-        s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        s.connect((self.ip,self.port))
-        self.__send_command(s, COMMAND_SPEED, SPEED)
-        self.__send_command(s, COMMAND_FILTER, FILTER)
-        self.__send_command(s, COMMAND_BIAS, BIASING_ON)
-        self.__send_command(s, COMMAND_START, SAMPLE_COUNT)
-        return s
+
     
     def get_force(self):
         while True:
             inBuffer = self.socket.recv(36)
             force = self.__parse_data(inBuffer)
             self.force = self.__filt(force)
+
+    def __connect_force(self):
+        s = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        s.connect((self.ip,self.port))
+        return s
     
-    def __send_command(self,sock, command, data):
+    def __init(self):
+        self.__send_command(COMMAND_SPEED, SPEED)
+        self.__send_command(COMMAND_FILTER, FILTER)
+        self.__send_command(COMMAND_BIAS, BIASING_ON)
+        self.__send_command(COMMAND_START, SAMPLE_COUNT)
+
+    def __send_command(self, command, data):
         request = bytearray(8)
         struct.pack_into('!H', request, 0, 0x1234)
         struct.pack_into('!H', request, 2, command)
@@ -106,8 +111,6 @@ class Force():
         self.socket.send(request)
         time.sleep(0.005)  # Wait a little, assuming the command has been processed by the Ethernet DAQ
     
-
-
     def __parse_data(self, inBuffer):
         FORCE_DIV = 10000.0 
         cur = list(range(6))
