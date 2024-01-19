@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from ic.ic import IC
-import ic.force as force
+from ic.force import Force
 import threading
 from visdom import Visdom
 from util.plot import Plot
@@ -39,6 +39,14 @@ def plot_viz():
         plt_pose.plot(pose*1000-initial_pose[:3])
 
 
+def generate_move(ic,step):
+    while True:
+        if ic.desired_pose_position_[1]>-0.38:
+            i = -1
+        if ic.desired_pose_position_[1]<-0.6:
+            i = 1
+        ic.moving(ic.desired_pose_position_[1]+200/100000*i)
+
 
 if __name__ == '__main__':
     """
@@ -67,8 +75,9 @@ if __name__ == '__main__':
     dashboard.ClearError()
     dashboard.SetSafeSkin(0)
     dashboard.SpeedFactor(60)
-    s = force.connect_force()
-    
+
+
+    force=Force()
 
     force_thread = threading.Thread(target=force.get_force, args=(s,))
     force_thread.daemon = True
@@ -78,10 +87,8 @@ if __name__ == '__main__':
         record = threading.Thread(target=plot_viz)
         record.daemon = True
         record.start()
-
-
-    sleep(2)
-
+ 
+ 
     initial_pose = [138.360397,-472.066620,407.361847,-179.488663,0.264109,179.605057]
     initial_joint = [90.0, 0.0, 100.0, -10.0, -90.0, 0.0]
     print(initial_pose)
@@ -89,6 +96,11 @@ if __name__ == '__main__':
     sleep(5)
 
     ic = IC(initial_pose=[initial_pose[0] / 1000, initial_pose[1] / 1000, initial_pose[2] / 1000, initial_pose[3], initial_pose[4], initial_pose[5]])
+
+    if moving:
+        move = threading.Thread(target=generate_move)
+        move.daemon = True
+        move.start(ic,0.01)
 
     if euler:
         while True:

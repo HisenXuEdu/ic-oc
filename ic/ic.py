@@ -1,7 +1,7 @@
 import numpy as np
+from time import sleep
 import socket
 import struct
-import time
 
 class IC():
     def __init__(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5],
@@ -60,7 +60,7 @@ class IC():
         return pose, euler
     
     def compute_admittance_l(self, force=np.zeros(6)) -> tuple[np.ndarray, np.ndarray]:
-        """带限位单步计算导纳API
+        """带限位单步计算导纳API，要先执行set_limit
 
         Args:
             limit_min (np.ndarray): 限位最小值
@@ -86,33 +86,15 @@ class IC():
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
     
-    def set_limit(self, limit_min:np.ndarray, limit_max:np.ndarray):
-        """设置限位
+    def compute_admittance_ff(self, force=np.zeros(6),):
+        """根据前馈力单步计算导纳API，要先执行set_forward_force
 
         Args:
-            limit_min (np.ndarray): 限位最小值
-            limit_max (np.ndarray): 限位最大值
+            force (_type_, optional): 当前接触力. Defaults to np.zeros(6).
+
+        Returns:
+            _type_: _description_
         """
-        self.limit_min=limit_min
-        self.limit_max=limit_max
-
-    def __limit(self,val):  #__代表私有成员
-        for i in range(len(val)):
-            if val[i] < self.limit_min[i]:
-                val[i] = self.limit_min[i]
-                self.arm_desired_twist_[i] = 0
-            if val[i] > self.limit_max[i]:
-                val[i] = self.limit_max[i]
-                self.arm_desired_twist_[i] = 0
-        return val
-
-    def change_para(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5]):
-        self.M_ = np.diag(m)
-        self.D_ = np.diag(d)
-        self.K_ = np.diag(k)
-        # print(self.K_)
-
-    def forward_force(self, force=np.zeros(6)):
         # m = [2,2,2,0.5,0.5,0.5]
         # M_ = np.diag(m)
         # k = [128,128,0,0.1,0.1,0.1]
@@ -124,7 +106,7 @@ class IC():
         error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
         force -= self.forward_force
-        arm_desired_accelaration = np.linalg.inv(M_) @ (-coupling_wrench_arm + force)
+        arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
         a_acc_norm = np.linalg.norm(arm_desired_accelaration[0:3])
         if a_acc_norm > self.arm_max_acc_:
             # print("Admittance generates high arm acceleration! norm:", a_acc_norm)
@@ -134,4 +116,60 @@ class IC():
         pose = self.arm_desired_pose_[0:3] 
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
+    
+    def set_forward_force(self, forward_force):
+        """设置前馈力
 
+        Args:
+            forward_force (_type_): 前馈力
+        """
+        self.forward_force=forward_force
+    
+    def set_limit(self, limit_min:np.ndarray, limit_max:np.ndarray):
+        """设置限位
+
+        Args:
+            limit_min (np.ndarray): 限位最小值
+            limit_max (np.ndarray): 限位最大值
+        """
+        self.limit_min=limit_min
+        self.limit_max=limit_max
+
+
+    
+    def change_para(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5]):
+        self.M_ = np.diag(m)
+        self.D_ = np.diag(d)
+        self.K_ = np.diag(k)
+        # print(self.K_)
+
+    
+    def move_single(self, pose):
+        """单步执行运动
+
+        Args:
+            pose (_type_): 三维运动轨迹
+        """
+        self.desired_pose_position_=pose
+
+    def move_trajectory(self, tra, t):
+        """根据运动轨迹执行运动（阻塞）
+
+        Args:
+            tra (_type_): 运动轨迹
+            t (_type_): 时间步长
+        """
+        for step in tra:
+            self.desired_pose_position_=step
+            sleep(t)
+
+
+    def __limit(self,val):  #__代表私有成员
+        for i in range(len(val)):
+            if val[i] < self.limit_min[i]:
+                val[i] = self.limit_min[i]
+                self.arm_desired_twist_[i] = 0
+            if val[i] > self.limit_max[i]:
+                val[i] = self.limit_max[i]
+                self.arm_desired_twist_[i] = 0
+        return val
