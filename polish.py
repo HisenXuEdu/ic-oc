@@ -10,7 +10,8 @@ from ic.ic import IC
 from ic.force import Force
 import threading
 from visdom import Visdom
-from util.plot import Plot
+# from util.plot import Plot
+from util.plot import *
 from util.util import *
 
 def connect_robot():
@@ -47,6 +48,7 @@ def generate_move(ic,step):
         if ic.desired_pose_position_[1]<-0.6:
             i = 1
         ic.move_single([ic.desired_pose_position_[0],ic.desired_pose_position_[1]+200/100000*i,ic.desired_pose_position_[2]])
+        print(ic.desired_pose_position_)
         sleep(step)
 
 
@@ -103,23 +105,15 @@ if __name__ == '__main__':
         tra.daemon = True
         tra.start()
 
-    if euler:
-        while True:
-            start_time = time.time()
-            # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
-            force_ = [-force.force[1]/10,-force.force[0]/10,-force.force[2]/10,force.force[4]*10,force.force[3]*10,-force.force[5]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
-            pose, euler = ic.compute_admittance(force_)
-            print(initial_pose[0],initial_pose[1],initial_pose[2],euler[0],euler[1],euler[2])
-            move.ServoP(initial_pose[0],initial_pose[1],initial_pose[2],euler[0],euler[1],euler[2])
-            while time.time() - start_time < 0.01:
-                pass
-    else:
-        while True:
-            start_time = time.time()
-            # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
-            force_ = [-force.force[1],-force.force[0],-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
-            pose, euler = ic.compute_admittance(force_)
-            print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
-            move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
-            while time.time() - start_time < 0.016:
-                pass
+    ic.set_forward_force(np.array([0,0,5,0,0,0]))
+    ic.change_para(m=[2, 2, 20, 2, 2, 2], d=[32, 25, 2000, 12, 12, 12], k=[128, 128, 0, 5, 5, 5])
+
+    while True:
+        start_time = time.time()
+        # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
+        force_ = [-force.force[1],-force.force[0],-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]
+        pose, euler = ic.compute_admittance_ff(force_)
+        # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
+        move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
+        while time.time() - start_time < 0.016:
+            pass

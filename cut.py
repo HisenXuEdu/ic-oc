@@ -11,6 +11,7 @@ from ic.force import Force
 import threading
 from visdom import Visdom
 from util.plot import Plot
+from util.plot import *
 from util.util import *
 
 def connect_robot():
@@ -31,8 +32,8 @@ def connect_robot():
 def plot_viz():
     global force_,pose,euler,initial_pose
     sleep(5)
-    plt_force=Plot(200,'FORCE')
-    plt_pose=Plot(200,'POSE')
+    plt_force=Plot(200,'FORCE',opt=opt_force)
+    plt_pose=Plot(200,'POSE',opt=opt_pose)
 
     while True:
         plt_force.plot(force_)
@@ -80,7 +81,7 @@ if __name__ == '__main__':
         # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
         force_ = [force.force[1]/10,-force.force[2]/3,-force.force[4],force.force[4]*10,-force.force[5]*10,-force.force[3]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
         pose, euler = ic.compute_admittance(force_)
-        print(pose[0]*1000,pose[1]*1000,pose[2]*1000,90.798767,0.044857,0.014894)
+        # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,90.798767,0.044857,0.014894)
         # move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler[0],0.044857,0.014894)
         move.ServoP(pose[0]*1000,pose[1]*1000,initial_pose[2],euler[0],0.044857,0.014894)
         while time.time() - start_time < 0.016:
