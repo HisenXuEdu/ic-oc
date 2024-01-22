@@ -106,7 +106,7 @@ if __name__ == '__main__':
         tra.start()
 
     ic.set_forward_force(np.array([0,0,5,0,0,0]))
-    ic.change_para(m=[2, 2, 20, 2, 2, 2], d=[32, 25, 2000, 12, 12, 12], k=[128, 128, 0, 5, 5, 5])
+    ic.change_para(m=[2, 2, 100, 2, 2, 2], d=[32, 25, 2000, 12, 12, 12], k=[128, 128, 0, 5, 5, 5])
 
     while True:
         start_time = time.time()

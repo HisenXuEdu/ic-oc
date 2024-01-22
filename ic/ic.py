@@ -11,7 +11,7 @@ class IC():
         self.M_ = np.diag(m)
         self.D_ = np.diag(d)
         self.K_ = np.diag(k)
-        self.arm_max_acc_ = 1
+        self.arm_max_acc_ = 3
 
         self.desired_pose_position_ = np.array(initial_pose[0:3]) 
         self.desired_pose_euler_ = np.array(initial_pose[3:6]) 
@@ -110,8 +110,8 @@ class IC():
         a_acc_norm = np.linalg.norm(arm_desired_accelaration[0:3])
         if a_acc_norm > self.arm_max_acc_:
             # print("Admittance generates high arm acceleration! norm:", a_acc_norm)
-            # arm_desired_accelaration[0:3] *= (self.arm_max_acc_ / a_acc_norm)
-            arm_desired_accelaration[2]*=self.arm_max_acc_ / a_acc_norm
+            arm_desired_accelaration[0:3] *= (self.arm_max_acc_ / a_acc_norm)
+            # arm_desired_accelaration[2]*=self.arm_max_acc_ / a_acc_norm
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
         self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
         pose = self.arm_desired_pose_[0:3] 
