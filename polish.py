@@ -48,7 +48,6 @@ def generate_move(ic,step):
         if ic.desired_pose_position_[1]<-0.6:
             i = 1
         ic.move_single([ic.desired_pose_position_[0],ic.desired_pose_position_[1]+200/100000*i,ic.desired_pose_position_[2]])
-        print(ic.desired_pose_position_)
         sleep(step)
 
 
@@ -89,7 +88,6 @@ if __name__ == '__main__':
 
     initial_pose = [138.360397,-472.066620,407.361847,-179.488663,0.264109,179.605057]
     initial_joint = [90.0, 0.0, 100.0, -10.0, -90.0, 0.0]
-    print(initial_pose)
     move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
     move.Sync()
 
