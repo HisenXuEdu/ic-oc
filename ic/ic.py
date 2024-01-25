@@ -11,7 +11,7 @@ class IC():
         self.M_ = np.diag(m)
         self.D_ = np.diag(d)
         self.K_ = np.diag(k)
-        self.arm_max_acc_ = 15
+        self.arm_max_acc_ = 10
 
         self.desired_pose_position_ = np.array(initial_pose[0:3]) 
         self.desired_pose_euler_ = np.array(initial_pose[3:6]) 
@@ -49,10 +49,11 @@ class IC():
         error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
-        a_acc_norm = np.linalg.norm(arm_desired_accelaration[0:3])
-        if a_acc_norm > self.arm_max_acc_:
-            # print("Admittance generates high arm acceleration! norm:", a_acc_norm)
-            arm_desired_accelaration[0:3] *= (self.arm_max_acc_ / a_acc_norm)
+        # a_acc_norm = np.linalg.norm(arm_desired_accelaration[0:3])
+        self.__limit_acc(arm_desired_accelaration)
+        # if a_acc_norm > self.arm_max_acc_:
+        #     # print("Admittance generates high arm acceleration! norm:", a_acc_norm)
+        #     arm_desired_accelaration[0:3] *= (self.arm_max_acc_ / a_acc_norm)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
         self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
         pose = self.arm_desired_pose_[0:3] 
@@ -75,10 +76,7 @@ class IC():
         error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
-        a_acc_norm = np.linalg.norm(arm_desired_accelaration[0:3])
-        if a_acc_norm > self.arm_max_acc_:
-            print("Admittance generates high arm acceleration! norm:", a_acc_norm)
-            arm_desired_accelaration[0:3] *= (self.arm_max_acc_ / a_acc_norm)
+        self.__limit_acc(arm_desired_accelaration)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
         self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
         pose = self.arm_desired_pose_[0:3] 
@@ -86,7 +84,7 @@ class IC():
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
     
-    def compute_admittance_ff(self, force=np.zeros(6),):
+    def compute_admittance_ff(self, force=np.zeros(6),limit=False):
         """根据前馈力单步计算导纳API，要先执行set_forward_force
 
         Args:
@@ -107,14 +105,12 @@ class IC():
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
         force -= self.forward_force
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
-        a_acc_norm = np.linalg.norm(arm_desired_accelaration[0:3])
-        if a_acc_norm > self.arm_max_acc_:
-            # print("Admittance generates high arm acceleration! norm:", a_acc_norm)
-            arm_desired_accelaration[0:3] *= (self.arm_max_acc_ / a_acc_norm)
-            # arm_desired_accelaration[2]*=self.arm_max_acc_ / a_acc_norm
+        self.__limit_acc(arm_desired_accelaration)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
         self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
         pose = self.arm_desired_pose_[0:3] 
+        if limit:
+            pose = self.__limit(pose) #这里仅实现了对xyz的限位
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
     
@@ -174,3 +170,8 @@ class IC():
                 val[i] = self.limit_max[i]
                 self.arm_desired_twist_[i] = 0
         return val
+    
+    def __limit_acc(self,acc):
+        for i in range(3):
+            if acc[i]>self.arm_max_acc_:
+                acc[i]*=(self.arm_max_acc_/acc[i])

@@ -56,7 +56,7 @@ if __name__ == '__main__':
     euler:是否在旋转角度开启阻抗控制
     plot:是否将运动和力用visdom打印
     """
-    moving = True
+    moving = False
     euler = False
     plot = True
 
@@ -76,7 +76,8 @@ if __name__ == '__main__':
     dashboard.EnableRobot()
     dashboard.ClearError()
     dashboard.SetSafeSkin(0)
-    dashboard.SpeedFactor(60)
+    dashboard.SetCollisionLevel(0)
+    dashboard.SpeedFactor(30)
 
 
     force=Force()
@@ -109,7 +110,7 @@ if __name__ == '__main__':
             # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
             force_ = [-force.force[1]/10,-force.force[0]/10,-force.force[2]/10,force.force[4]*10,force.force[3]*10,-force.force[5]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
             pose, euler = ic.compute_admittance(force_)
-            print(initial_pose[0],initial_pose[1],initial_pose[2],euler[0],euler[1],euler[2])
+            # print(initial_pose[0],initial_pose[1],initial_pose[2],euler[0],euler[1],euler[2])
             move.ServoP(initial_pose[0],initial_pose[1],initial_pose[2],euler[0],euler[1],euler[2])
             while time.time() - start_time < 0.01:
                 pass
@@ -119,7 +120,7 @@ if __name__ == '__main__':
             # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
             force_ = [-force.force[1],-force.force[0],-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
             pose, euler = ic.compute_admittance(force_)
-            print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
+            # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
             move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
             while time.time() - start_time < 0.016:
                 pass

@@ -14,6 +14,13 @@ from visdom import Visdom
 from util.plot import *
 from util.util import *
 
+
+"""
+1.力追踪擦拭1N
+2.沿x轴进行拖动
+3.
+"""
+
 def connect_robot():
     try:
         ip = "192.168.5.1"
@@ -77,7 +84,8 @@ if __name__ == '__main__':
     dashboard.EnableRobot()
     dashboard.ClearError()
     dashboard.SetSafeSkin(0)
-    dashboard.SpeedFactor(60)
+    dashboard.SetCollisionLevel(0)
+    dashboard.SpeedFactor(30)
 
 
     force=Force()
@@ -87,12 +95,15 @@ if __name__ == '__main__':
     force_thread.start()
 
     # initial_pose = [138.360397,-472.066620,407.361847,-179.488663,0.264109,179.605057]
-    initial_pose = [138.360397,-602.066620,-30.361847,-179.488663,0.264109,179.605057]
+    initial_pose = [138.360397,-602.066620,10.361847,-179.488663,0.264109,179.605057]
     initial_joint = [90.0, 0.0, 100.0, -10.0, -90.0, 0.0]
     move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
     move.Sync()
 
     ic = IC(initial_pose=[initial_pose[0] / 1000, initial_pose[1] / 1000, initial_pose[2] / 1000, initial_pose[3], initial_pose[4], initial_pose[5]])
+    limit_min=[(initial_pose[0]-200)/1000,(initial_pose[1]-200)/1000,(initial_pose[2]-100)/1000]
+    limit_max=[(initial_pose[0]+200)/1000,(initial_pose[1]+200)/1000,(initial_pose[2]+100)/1000]
+    ic.set_limit(limit_min,limit_max)
 
     if plot:
         record = threading.Thread(target=plot_viz)
@@ -104,19 +115,17 @@ if __name__ == '__main__':
         tra.daemon = True
         tra.start()
 
-    ic.set_forward_force(np.array([0,0,1,0,0,0]))
-    # ic.change_para(m=[2, 2, 100, 2, 2, 2], d=[32, 25, 2000, 12, 12, 12], k=[128, 128, 0, 5, 5, 5])
-    # ic.change_para(m=[2, 2, 100, 0.1, 0.1, 0.1], d=[32, 25, 2000, 2, 2, 2], k=[128, 128, 0, 0.1, 0.1, 0.1])
-    # ic.change_para(m=[2, 2, 100, 0.5, 0.5, 0.5], d=[32, 25, 2000, 12, 12, 12], k=[400, 400, 0, 5, 5, 5])
-    # ic.change_para(m=[2, 2, 10, 0.2, 0.2, 0.2], d=[32, 25, 200, 3, 3, 3], k=[400, 400, 0, 0.5, 0.5, 0.5])
-    ic.change_para(m=[2, 2, 10, 0.1, 0.1, 0.1], d=[32, 25, 200, 2, 2, 2], k=[400, 400, 0, 0.5, 0.5, 0.5])
+    ic.set_forward_force(np.array([0,0,3,0,0,0]))
+    # ic.change_para(m=[5, 2, 10, 2, 0.5, 0.1], d=[120, 25, 200, 200, 5, 2], k=[0, 400, 0, 80, 0, 0.5])  #内槽可以
+    ic.change_para(m=[5, 2, 15, 2, 0.5, 0.1], d=[120, 25, 600, 200, 5, 2], k=[0, 400, 0, 80, 0, 0.5])  #内槽可以
 
     while True:
         start_time = time.time()
-        # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
+        # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,sforce[4]*10,-force[5]*10,-force[3]*10]
         force_ = [-force.force[1],-force.force[0],-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]
-        pose, euler = ic.compute_admittance_ff(force_)
+        pose, euler = ic.compute_admittance_ff(force_,True)
         # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
+        # print(dashboard.GetSixForceData())
         move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler[0],euler[1],euler[2])
         while time.time() - start_time < 0.016:
             pass

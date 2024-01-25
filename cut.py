@@ -74,19 +74,21 @@ if __name__ == '__main__':
     move.Sync()
 
     ic = IC(initial_pose =[initial_pose[0]/1000,initial_pose[1]/1000,initial_pose[2]/1000,initial_pose[3],initial_pose[4],initial_pose[5]])
-    ic.change_para(m = [200,2,200,200,2,2],d = [1200,25,1000,1200,12,12],k = [0,128,0,0,5,5])
+    # ic.change_para(m = [200,2,200,200,2,2],d = [1200,25,1000,1200,12,12],k = [0,128,0,0,5,5])
+    ic.change_para(m = [200,2,200,8,2,2],d = [1200,25,1000,120,12,12],k = [0,128,0,0,5,5])
     limit_min=[(initial_pose[0]-100)/1000,(initial_pose[1]-150)/1000,(initial_pose[2]-100)/1000]
     limit_max=[(initial_pose[0]+200)/1000,(initial_pose[1]+100)/1000,(initial_pose[2]+200)/1000]
     ic.set_limit(limit_min,limit_max)
+    ic.set_forward_force(np.array([0,0,2,0,0,0]))
     # ic.change_para(m = [200,0.2,200,200,2,2],d = [1200,20,1000,1200,12,12],k = [0,800,0,0,5,5])
     # ic.change_para(m = [200,0.2,200,200,2,2],d = [1200,8,1000,1200,12,12],k = [0,250,0,0,5,5])
     while True:
         start_time = time.time()
-        # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
-        force_ = [force.force[1]/10,-force.force[2]/3,-force.force[4],force.force[4]*10,-force.force[5]*10,-force.force[3]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
-        pose, euler = ic.compute_admittance_l(force_)
+        force_ = [force.force[1]/10,-force.force[2]/3,-force.force[0]/10,force.force[4]*10,-force.force[5]*10,-force.force[3]*10]
+        # force_ = [force.force[1]/10,-force.force[2]/3,-force.force[4],force.force[4]*10,-force.force[5]*10,-force.force[3]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
+        pose, euler = ic.compute_admittance_ff(force_,True)
         # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,90.798767,0.044857,0.014894)
-        # move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler[0],0.044857,0.014894)
-        move.ServoP(pose[0]*1000,pose[1]*1000,initial_pose[2],euler[0],0.044857,0.014894)
+        move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler[0],initial_pose[4],initial_pose[5])
+        # move.ServoP(pose[0]*1000,pose[1]*1000,initial_pose[2],euler[0],0.044857,0.014894)
         while time.time() - start_time < 0.008:
             pass
