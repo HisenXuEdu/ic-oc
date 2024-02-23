@@ -1,3 +1,8 @@
+"""
+*点镇定阻抗控制展示
+*运动过程阻抗控制展示
+"""
+
 import sys
 from util.dobot_api import DobotApiDashboard, DobotApi, DobotApiMove, MyType, alarmAlarmJsonFile
 from time import sleep
