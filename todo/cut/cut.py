@@ -22,6 +22,7 @@ from visdom import Visdom
 from util.plot import Plot
 from util.plot import *
 from util.util import *
+from emg.emg import *
 
 def connect_robot():
     try:
@@ -47,6 +48,37 @@ def plot_viz():
     while True:
         plt_force.plot(force_)
         plt_pose.plot(pose*1000-initial_pose[:3])
+
+def change_para():
+    global emg, K_,D_,M_
+    while True:
+        k = emg.get_K()
+        print(k)
+        m = [2,2,2,2,2,2]
+        M_ = np.diag(m)
+        k = [100,100,100,5,5,5]
+        K_ = np.diag(k)
+        d = [32,32,32,2,2,2]
+        
+        
+
+        channel=1
+        dev_emg = pytrigno.TrignoEMG(channel_range=(0,channel-1), samples_per_read=500,
+                            host='127.0.0.1')
+        dev_emg.start()
+        data_EMG = dev_emg.read()
+        while True:
+            data_EMG = dev_emg.read()
+            data_EMG = np.abs(data_EMG)
+            data_EMG = np.mean(data_EMG)
+            print(data_EMG)
+            m = [200,2,200,8,2,2]
+            M_ = np.diag(m)
+            d = [1200,25,1000,120,12,12]
+            D_ = np.diag(d)
+            k = [0,128,0,0,5,5]
+            K_ = np.diag(k)
+
 
 if __name__ == '__main__':
     """
@@ -76,6 +108,11 @@ if __name__ == '__main__':
         record.daemon = True
         record.start()
 
+    emg = Emg(mdoel='model_path/FCNN-b32-29:13:09-i8o3.pth', channel=6, host='127.0.0.1')
+    para_thread = threading.Thread(target=change_para)
+    para_thread.daemon = True
+    para_thread.start()
+    
 
     initial_pose = [141.932007,-541.146973,391.485504,90.798767,0.044857,0.014894]
     print(initial_pose)
