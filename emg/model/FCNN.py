@@ -118,11 +118,11 @@ def train(model, loader, device, epoch, name):
 
 def result(model, x):
     list=[[]]
-    print(x.shape)
+    # print(x.shape)
     for i, data in enumerate(x):
         with torch.no_grad():
             outputs = model(torch.unsqueeze(x[i], dim=0)).cpu()
-            print(outputs.size())
+            # print(outputs.size())
             list.append(outputs[0].numpy().tolist())
     data=pd.DataFrame(list)
     return data

@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-class feature():
+class Feature():
     def __init__(self, x):
         self.x = x
         self.time_features_matrix = []

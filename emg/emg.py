@@ -5,21 +5,32 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from scipy import signal
+from sklearn.preprocessing import StandardScaler
+
+
 # 将父级目录加入到import的path中
 current_dir = os.path.dirname(__file__)
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
-import emg.pytrigno as pytrigno
+
+import pytrigno as pytrigno
 
 
-from process.pre_process import *
+# from process.pre_process import *
 from process.feature import *
 from model.FCNN import *
 import torch
 
 
 class Emg:
-    def __init__(self, mdoel, channel=1, host='127.0.0.1'):
+    def __init__(self, model, channel=1, host='127.0.0.1'):
+        
+        self.model = MyModel(8, 3)
+        checkpoint = torch.load(model)
+        self.model.load_state_dict(checkpoint['net'])
+        self.K=[0,0,0]
+
         self.channel = channel
         self.dev_emg = pytrigno.TrignoEMG(channel_range=(0,self.channel-1), samples_per_read=400,
                     host=host)
@@ -27,18 +38,18 @@ class Emg:
         # data=Data(6,3)
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # print(self.device)
-        self.model = MyModel(8, 3)
         # self.model.to(self.device)
-        checkpoint = torch.load('model_path/FCNN-b32-29:13:09-i8o3.pth')
-        self.model.load_state_dict(checkpoint['net'])
-        self.K=[0,0,0]
+
         
     def get_single(self):
-        self.x = self.dev_emg.read()
+        x = self.dev_emg.read()
+        self.x = pd.DataFrame(x.T)
+        # print(self.x)
         self.normalise()
         self.filter_data(f=(20,50), butterworth_order=4, btype='bandpass')
         self.rectify_data()
-        feature(x)
+        x = self.windowing(200,20,400)
+        feature = Feature(x)
         feature.time_features_estimation(x, 200)
         x = feature.time_features_matrix.astype(np.float32)
         x = torch.tensor(x)
@@ -46,6 +57,7 @@ class Emg:
     
     def get_K(self):
         x = self.get_single()
+        # print(x)
         res = result(self.model, x)
         self.K=res
         return res
@@ -84,10 +96,24 @@ class Emg:
     def rectify_data(self):
         self.x = abs(self.x)
 
+    def windowing(self, win_len, win_stride, len_data):
+
+        idx=  [i for i in range(win_len, len_data, win_stride)]
+        x = np.zeros([len(idx), win_len, self.channel])
+        
+        #别忘了这里有20的窗口重叠
+        for i,end in enumerate(idx):
+            start = end - win_len
+            x[i] = self.x.iloc[start:end, :].values
+        return x
+
+    def stop(self):
+        self.dev_emg.stop()
 
 if __name__ == '__main__':
-    emg = Emg()
+    emg = Emg(model='model_path/i8o3.pth', channel=6, host='127.0.0.1')
     while(1):
         k = emg.get_K()
-        print(k)
+        print(k.drop(k.index[[0]]).mean(axis=0))
+    emg.stop()
 

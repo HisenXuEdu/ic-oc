@@ -108,7 +108,7 @@ if __name__ == '__main__':
         record.daemon = True
         record.start()
 
-    emg = Emg(mdoel='model_path/FCNN-b32-29:13:09-i8o3.pth', channel=6, host='127.0.0.1')
+    emg = Emg(model='model_path/i8o3.pth', channel=6, host='127.0.0.1')
     para_thread = threading.Thread(target=change_para)
     para_thread.daemon = True
     para_thread.start()
