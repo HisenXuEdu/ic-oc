@@ -37,14 +37,30 @@ def connect_robot():
 
 
 def plot_viz():
-    global force_,pose,euler,initial_pose
+    global force_,pose,euler_,initial_pose
     sleep(2)
-    plt_force=Plot(200,'FORCE')
-    plt_pose=Plot(200,'POSE')
+    plt_force=Plot(500,'FORCE')
+    plt_pose=Plot(500,'POSE')
+    force_list=[]
+    pose_list=[]
+    euler_list=[]
 
     while True:
         plt_force.plot(force_)
         plt_pose.plot(pose*1000-initial_pose[:3])
+        
+        force_list.append(force_)
+        pose_list.append(pose*1000-initial_pose[:3]+euler_)
+        euler_list.append([euler_[0],euler_[1],euler_[2]])
+        print(euler_[0],euler_[1],euler_[2])
+        if(len(force_list)>1000):
+            force_list = pd.DataFrame(force_list, columns=None)
+            force_list.to_csv('./Data/FORCE2.csv', index=None)
+            pose_list = pd.DataFrame(pose_list, columns=None)
+            pose_list.to_csv('./Data/POSE2.csv', index=None)
+            euler_list = pd.DataFrame(euler_list, columns=None)
+            euler_list.to_csv('./Data/EULER2.csv', index=None)
+            break
 
 
 def generate_move(ic,step):
@@ -86,7 +102,7 @@ if __name__ == '__main__':
     dashboard.SetSafeSkin(0)
     dashboard.SetCollisionLevel(0)
     dashboard.SpeedFactor(30)
-
+ 
 
     force=Force()
 
@@ -126,9 +142,11 @@ if __name__ == '__main__':
         start_time = time.time()
         # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
         force_ = [-force.force[1],-force.force[0],-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]
-        pose, euler = ic.compute_admittance_ff(force_,True)
+        pose, euler_ = ic.compute_admittance_ff(force_,True)
+        # print(euler_[0],euler_[1],euler_[2])
         # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
         # print(dashboard.GetSixForceData())
-        move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler[0],euler[1],euler[2])
+
+        move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler_[0],euler_[1],euler_[2])
         while time.time() - start_time < 0.016:
             pass
