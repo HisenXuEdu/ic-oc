@@ -177,7 +177,7 @@ class TrignoEMG(_BaseTrignoDaq):
     """
 
     def __init__(self, channel_range, samples_per_read, units='V',
-                 host='192.168.56.1', cmd_port=50040, data_port=50043, timeout=10):
+                 host='192.168.56.1', cmd_port=50040, data_port=50043, timeout=20):
         super(TrignoEMG, self).__init__(
             host=host, cmd_port=cmd_port, data_port=data_port,
             total_channels=16, timeout=timeout)

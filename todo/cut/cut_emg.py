@@ -22,7 +22,7 @@ from visdom import Visdom
 from util.plot import Plot
 from util.plot import *
 from util.util import *
-# from emg.emg import *
+from emg.emg import *
 
 def connect_robot():
     try:
@@ -39,20 +39,66 @@ def connect_robot():
         raise e
 
 
+# def plot_viz():
+#     global force_,pose,euler,initial_pose,K_list
+#     sleep(5)
+#     plt_force=Plot(200,'FORCE',opt=opt_force)
+#     plt_pose=Plot(200,'POSE',opt=opt_pose)
+#     start = time.time()
+
+#     while True:
+#         plt_force.plot(force_)
+#         plt_pose.plot(pose*1000-initial_pose[:3])
+
 def plot_viz():
-    global force_,pose,euler,initial_pose
-    sleep(5)
-    plt_force=Plot(200,'FORCE',opt=opt_force)
-    plt_pose=Plot(200,'POSE',opt=opt_pose)
+    global force_,pose,euler_,initial_pose,K_list
+    sleep(9)
+    plt_force=Plot(200,'FORCE')
+    plt_pose=Plot(200,'POSE')
+    plt_k = Plot(200, 'K')
+    force_list=[]
+    pose_list=[]
+    euler_list=[]
 
     while True:
         plt_force.plot(force_)
         plt_pose.plot(pose*1000-initial_pose[:3])
+        plt_k.plot(1000 - (K_list[-1][0]*10000000-400)/2.5)
+        
+        force_list.append(force_)
+        pose_list.append(pose*1000-initial_pose[:3]+euler_)
+        euler_list.append([euler_[0],euler_[1],euler_[2]])
+        if(len(force_list)>1000):
+            force_list = pd.DataFrame(force_list, columns=None)
+            force_list.to_csv('./Data/FORCE5.csv', index=None)
+            pose_list = pd.DataFrame(pose_list, columns=None)
+            pose_list.to_csv('./Data/POSE5.csv', index=None)
+            euler_list = pd.DataFrame(euler_list, columns=None)
+            euler_list.to_csv('./Data/EULER5.csv', index=None)
+            k_list = pd.DataFrame(K_list, columns=None)
+            k_list.to_csv('./Data/K5.csv', index=None)
+            break
 
 def change_para():
-    global emg, K_,D_,M_
+    global emg, ic
     while True:
-        k = emg.get_K()
+        data_EMG = emg.get_single()
+        K_list.append(data_EMG)
+        print(data_EMG)
+        if data_EMG[0]<0.00005:
+            print(1)
+            # ic.change_para(m = [200,10,200,200,2,2],d = [1200,400,1000,1200,12,12],k = [0,900,0,0,5,5])
+            # ic.change_para(m = [200,10,200,200,2,2],d = [250,400,1000,1200,12,12],k = [0,1500,0,0,5,5])
+            # ic.change_para(m = [200,10,200,200,2,2],d = [250,250,1000,1200,12,12],k = [0,2000,0,0,5,5])
+            ic.change_para(m = [200,10,200,200,2,2],d = [250,100,1000,1200,12,12],k = [0,500,0,0,5,5])
+        else:
+            print(2)
+            # ic.change_para(m = [200,2,200,8,2,2],d = [250,40,1000,120,12,12],k = [0,228,0,0,5,5])
+            ic.change_para(m = [200,10,200,200,2,2],d = [250,100,1000,1200,12,12],k = [0,500,0,0,5,5])
+
+
+    while True:
+        k = emg.get_single()
         print(k)
         m = [2,2,2,2,2,2]
         M_ = np.diag(m)
@@ -78,6 +124,8 @@ def change_para():
             D_ = np.diag(d)
             k = [0,128,0,0,5,5]
             K_ = np.diag(k)
+    
+
 
 
 if __name__ == '__main__':
@@ -88,13 +136,17 @@ if __name__ == '__main__':
     """
     plot = True
 
+    K_list = []
+
+
+
     args = sys.argv[1:]
     if len(args) == 1:
         plot = str2bool(args[0])
     dashboard, move = connect_robot()
     dashboard.EnableRobot()
     dashboard.ClearError()
-    dashboard.SpeedFactor(40)
+    dashboard.SpeedFactor(60)
     dashboard.SetSafeSkin(0)
     
     force=Force()
@@ -108,13 +160,10 @@ if __name__ == '__main__':
         record.daemon = True
         record.start()
 
-    # emg = Emg(model='model_path/i8o3.pth', channel=6, host='127.0.0.1')
-    # para_thread = threading.Thread(target=change_para)
-    # para_thread.daemon = True
-    # para_thread.start()
+
     
 
-    initial_pose = [141.932007,-541.146973,50.485504,90.798767,0.044857,0.014894]
+    initial_pose = [141.932007,-441.146973,110.485504,90.798767,0.044857,0.014894]
     print(initial_pose)
     move.MovL(initial_pose[0],initial_pose[1],initial_pose[2],initial_pose[3],initial_pose[4],initial_pose[5])
     move.Sync()
@@ -126,17 +175,18 @@ if __name__ == '__main__':
     limit_max=[(initial_pose[0]+200)/1000,(initial_pose[1]+100)/1000,(initial_pose[2]+200)/1000]
     ic.set_limit(limit_min,limit_max)
     ic.set_forward_force(np.array([0,0,2,0,0,0]))
-    ic.change_para(m = [200,10,200,200,2,2],d = [1200,400,1000,1200,12,12],k = [0,900,0,0,5,5])
-    ic.change_para(m = [200,2,200,8,2,2],d = [1200,50,1000,120,12,12],k = [0,228,0,0,5,5])
-    # ic.change_para(m = [200,10,200,200,2,2],d = [1200,100,1000,1200,12,12],k = [0,300,0,0,5,5])
-    # ic.change_para(m = [200,0.2,200,200,2,2],d = [1200,8,1000,1200,12,12],k = [0,250,0,0,5,5])
+
+    emg = Emg_S(channel=3, host='127.0.0.1')
+    para_thread = threading.Thread(target=change_para)
+    para_thread.daemon = True
+    para_thread.start()
+
     while True:
         start_time = time.time()
-        force_ = [force.force[1]/10,-force.force[2]/3,-force.force[0]/3,force.force[4]/10,-force.force[5]/10,-force.force[3]/10]
+        force_ = [force.force[1]/10,-force.force[2]/3,-force.force[0]/3,force.force[4]/5,-force.force[5]/5,-force.force[3]/5]
         # force_ = [force.force[1]/10,-force.force[2]/3,-force.force[4],force.force[4]*10,-force.force[5]*10,-force.force[3]*10]  #这里将z轴的力设置为旋转轴的力，因为z轴受力没法传给六维力传感器。
-        pose, euler = ic.compute_admittance_ff(force_,True)
+        pose, euler_ = ic.compute_admittance_ff(force_,True)
         # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,90.798767,0.044857,0.014894)
-        # move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler[0],initial_pose[4],initial_pose[5])
         move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
         # move.ServoP(pose[0]*1000,pose[1]*1000,initial_pose[2],euler[0],0.044857,0.014894)
         while time.time() - start_time < 0.008:

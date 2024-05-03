@@ -39,8 +39,8 @@ class Plot():
         if not opt:
             self.opt={
             "title": self.title,
-            "width":1000,
-            "height":500,
+            "width":1300,
+            "height":250,
             "legend":['x','y','z','r','p','y']
         }
         else:
