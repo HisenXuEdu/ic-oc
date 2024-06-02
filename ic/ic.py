@@ -2,6 +2,7 @@ import numpy as np
 from time import sleep
 import socket
 import struct
+import math
 
 class IC():
     def __init__(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5],
@@ -27,6 +28,7 @@ class IC():
         #limit
         self.limit_min=[-1000,-1000,-1000,-1000,-1000,-1000]
         self.limit_max=[1000,1000,1000,1000,1000,1000]
+        self.bound=10
 
         # 计算循环的时间间隔
         # loop_rate = 20  # Hz
@@ -107,6 +109,9 @@ class IC():
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
         self.__limit_acc(arm_desired_accelaration)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
+        # print(self.arm_desired_twist_)
+        # if limit:
+        #     self.__limitv()
         self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
         pose = self.arm_desired_pose_[0:3] 
         if limit:
@@ -122,7 +127,7 @@ class IC():
         """
         self.forward_force=forward_force
     
-    def set_limit(self, limit_min:np.ndarray, limit_max:np.ndarray):
+    def set_limit(self, limit_min:np.ndarray, limit_max:np.ndarray, bound = 0.1):
         """设置限位
 
         Args:
@@ -131,6 +136,9 @@ class IC():
         """
         self.limit_min=limit_min
         self.limit_max=limit_max
+        self.bound=bound
+            
+
 
 
     
@@ -165,13 +173,28 @@ class IC():
         for i in range(len(val)):
             if val[i] < self.limit_min[i]:
                 val[i] = self.limit_min[i]
-                self.arm_desired_twist_[i] = 0
+                # self.arm_desired_twist_[i] = 0
             if val[i] > self.limit_max[i]:
                 val[i] = self.limit_max[i]
-                self.arm_desired_twist_[i] = 0
+                # self.arm_desired_twist_[i] = 0
         return val
     
     def __limit_acc(self,acc):
         for i in range(3):
             if acc[i]>self.arm_max_acc_:
                 acc[i]*=(self.arm_max_acc_/acc[i])
+
+    def __limitv(self):
+        for i in range(3):
+            if(self.arm_desired_pose_[i] >= self.limit_max[i] or self.arm_desired_pose_[i] <= self.limit_min[i]):
+                self.arm_desired_twist_[i]=min(self.arm_desired_twist_[i],0)
+                print(self.arm_desired_twist_[i])
+                return
+            if(self.arm_desired_pose_[i] <= self.limit_min[i]):
+                self.arm_desired_twist_[i]=min(self.arm_desired_twist_[i],0)
+                print(self.arm_desired_twist_[i])t
+                return
+            if(self.arm_desired_pose_[i]>(self.limit_max[i]-self.bound)):
+                self.arm_desired_twist_[i] = min(self.arm_desired_twist_[i], 1*math.sqrt(self.limit_max[i] - self.arm_desired_pose_[i]))
+            if(self.arm_desired_pose_[i]<(self.limit_min[i]+self.bound)):
+                self.arm_desired_twist_[i] = min(self.arm_desired_twist_[i], 1*math.sqrt(self.arm_desired_pose_[i] - self.limit_min[i]))

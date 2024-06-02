@@ -70,13 +70,13 @@ def plot_viz():
         euler_list.append([euler_[0],euler_[1],euler_[2]])
         if(len(force_list)>1000):
             force_list = pd.DataFrame(force_list, columns=None)
-            force_list.to_csv('./Data/FORCE5.csv', index=None)
+            force_list.to_csv('./Data/FORCE6.csv', index=None)
             pose_list = pd.DataFrame(pose_list, columns=None)
-            pose_list.to_csv('./Data/POSE5.csv', index=None)
+            pose_list.to_csv('./Data/POSE6.csv', index=None)
             euler_list = pd.DataFrame(euler_list, columns=None)
-            euler_list.to_csv('./Data/EULER5.csv', index=None)
+            euler_list.to_csv('./Data/EULER6.csv', index=None)
             k_list = pd.DataFrame(K_list, columns=None)
-            k_list.to_csv('./Data/K5.csv', index=None)
+            k_list.to_csv('./Data/K6.csv', index=None)
             break
 
 def change_para():
@@ -93,8 +93,8 @@ def change_para():
             ic.change_para(m = [200,10,200,200,2,2],d = [250,100,1000,1200,12,12],k = [0,500,0,0,5,5])
         else:
             print(2)
-            # ic.change_para(m = [200,2,200,8,2,2],d = [250,40,1000,120,12,12],k = [0,228,0,0,5,5])
-            ic.change_para(m = [200,10,200,200,2,2],d = [250,100,1000,1200,12,12],k = [0,500,0,0,5,5])
+            ic.change_para(m = [200,2,200,8,2,2],d = [250,40,1000,120,12,12],k = [0,228,0,0,5,5])
+            # ic.change_para(m = [200,10,200,200,2,2],d = [250,100,1000,1200,12,12],k = [0,500,0,0,5,5])
 
 
     while True:
@@ -125,6 +125,23 @@ def change_para():
             k = [0,128,0,0,5,5]
             K_ = np.diag(k)
     
+
+def change_para1():
+    global emg, ic
+    while True:
+        data_EMG = emg.get_single()
+        K_list.append(data_EMG)
+        print(data_EMG)
+        kc = (1000 - (K_list[-1][0]*10000000-400))/2
+        dc = kc/5
+        if(kc<200): 
+            kc=100
+        if(dc<40):
+            dc=20
+        print(kc, dc)
+        ic.change_para(m = [200,10,200,200,2,2],d = [250,dc,1000,1200,12,12],k = [0,kc,0,0,5,5])
+
+
 
 
 
@@ -171,7 +188,7 @@ if __name__ == '__main__':
     ic = IC(initial_pose =[initial_pose[0]/1000,initial_pose[1]/1000,initial_pose[2]/1000,initial_pose[3],initial_pose[4],initial_pose[5]])
     # ic.change_para(m = [200,2,200,200,2,2],d = [1200,25,1000,1200,12,12],k = [0,128,0,0,5,5])
     ic.change_para(m = [200,2,200,8,2,2],d = [1200,25,1000,120,12,12],k = [0,128,0,0,5,5])
-    limit_min=[(initial_pose[0]-100)/1000,(initial_pose[1]-150)/1000,(initial_pose[2]-100)/1000]
+    limit_min=[(initial_pose[0]-100)/1000,(initial_pose[1]-100)/1000,(initial_pose[2]-100)/1000]
     limit_max=[(initial_pose[0]+200)/1000,(initial_pose[1]+100)/1000,(initial_pose[2]+200)/1000]
     ic.set_limit(limit_min,limit_max)
     ic.set_forward_force(np.array([0,0,2,0,0,0]))
