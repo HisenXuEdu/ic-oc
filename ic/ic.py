@@ -35,6 +35,8 @@ class IC():
         loop_rate = 75 # Hz
         self.sec = 1.0 / loop_rate
 
+        self.last_error = np.zeros(6)
+
     
 
     def compute_admittance(self, force=np.zeros(6)) -> tuple[np.ndarray, np.ndarray]:
@@ -119,6 +121,32 @@ class IC():
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
     
+    def compute_admittance_env(self, force=np.zeros(6),limit=False):
+        error_force = np.zeros(6)
+        if force[2] > 0:
+            error_force = force - self.forward_force
+
+        error = np.zeros(6)
+        error[0:3] = self.arm_desired_pose_[0:3]  - self.desired_pose_position_
+        error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
+        coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
+        force -= (self.forward_force - self.last_error)
+        arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
+        self.__limit_acc(arm_desired_accelaration)
+        self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
+        # print(self.arm_desired_twist_)
+        # if limit:
+        #     self.__limitv()
+        self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
+        pose = self.arm_desired_pose_[0:3] 
+        if limit:
+            pose = self.__limit(pose) #这里仅实现了对xyz的限位
+        euler = self.arm_desired_pose_[3:6] 
+        self.last_error = self.last_error + 0.2*error_force
+        # self.last_error = 0.99*(self.last_error + 0.6*error_force)
+        return pose, euler
+
+    
     def set_forward_force(self, forward_force):
         """设置前馈力
 
@@ -192,7 +220,7 @@ class IC():
                 return
             if(self.arm_desired_pose_[i] <= self.limit_min[i]):
                 self.arm_desired_twist_[i]=min(self.arm_desired_twist_[i],0)
-                print(self.arm_desired_twist_[i])t
+                print(self.arm_desired_twist_[i])
                 return
             if(self.arm_desired_pose_[i]>(self.limit_max[i]-self.bound)):
                 self.arm_desired_twist_[i] = min(self.arm_desired_twist_[i], 1*math.sqrt(self.limit_max[i] - self.arm_desired_pose_[i]))

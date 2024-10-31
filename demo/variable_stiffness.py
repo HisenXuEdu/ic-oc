@@ -9,7 +9,7 @@ import struct
 import argparse
 import sys
 from visdom import Visdom
-import util.pytrigno as pytrigno
+import emg.pytrigno as pytrigno
 
 
 # 全局变量(当前坐标)
