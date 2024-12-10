@@ -21,3 +21,6 @@ class EMG:
 
 if __name__ == '__main__':
     emg = EMG(channel=3, host='127.0.0.1')
+    while True:
+        emg.get_pose()
+        break
