@@ -36,6 +36,7 @@ class IC():
         self.sec = 1.0 / loop_rate
 
         self.last_error = np.zeros(6)
+        self.le = np.zeros(6)
 
     
 
@@ -130,7 +131,7 @@ class IC():
         error[0:3] = self.arm_desired_pose_[0:3]  - self.desired_pose_position_
         error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
-        force -= (self.forward_force - self.last_error)
+        force -= (self.forward_force - self.last_error - 0.2*(error_force - self.le))
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
         self.__limit_acc(arm_desired_accelaration)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
@@ -143,6 +144,7 @@ class IC():
             pose = self.__limit(pose) #这里仅实现了对xyz的限位
         euler = self.arm_desired_pose_[3:6] 
         self.last_error = self.last_error + 0.2*error_force
+        self.le = error_force
         # self.last_error = 0.99*(self.last_error + 0.6*error_force)
         return pose, euler
 

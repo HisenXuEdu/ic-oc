@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 from scipy.io import loadmat
+import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
 class Data():
@@ -125,3 +126,19 @@ class Data():
 # data.rectify_data()
 # data.emg_signal[:100000].plot(figsize = (15,10))
 # data.windowing_data(200, 100)
+
+data=Data(12,6)
+data.get_data("C:\\Users\\16105\\Desktop\\4.29采集", "data1.mat")
+
+plt.figure(figsize=(10, 8))
+
+for i in range(4):  # 假设有6个通道
+    plt.subplot(4, 1, i+1)  # 6行1列，第i+1个子图
+    plt.plot(data.emg_signal.iloc[:3000, i])  # 绘制第i个通道的数据
+    plt.title(f'Channel {i+1}')  # 每个子图添加标题
+    plt.xlabel('Samples')
+    plt.ylabel('Signal Value')
+    plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+
+plt.tight_layout()
+plt.show()

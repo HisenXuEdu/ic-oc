@@ -238,6 +238,7 @@ class TrignoAccel(_BaseTrignoDaq):
         channels.
     samples_per_read : int
         Number of samples per channel to read in each read operation.
+        # 这里指获取多少组加速度数据点，比如要1秒就写144
     host : str, optional
         IP address the TCU server is running on. By default, the device is
         assumed to be attached to the local machine.
@@ -253,7 +254,7 @@ class TrignoAccel(_BaseTrignoDaq):
                  cmd_port=50040, data_port=50044, timeout=10):
         super(TrignoAccel, self).__init__(
             host=host, cmd_port=cmd_port, data_port=data_port,
-            total_channels=48, timeout=timeout)
+            total_channels=144, timeout=timeout)
 
         self.channel_range = channel_range
         self.samples_per_read = samples_per_read
@@ -273,18 +274,43 @@ class TrignoAccel(_BaseTrignoDaq):
         self.num_channels = channel_range[1] - channel_range[0] + 1
 
     def read(self):
-        """
-        Request a sample of data from the device.
+        l_des = self.samples_per_read * self._min_recv_size
+        l = 0
+        packet = bytes()
+        while l < l_des:
+            try:
+                packet += self._data_socket.recv(l_des - l)
+            except socket.timeout:
+                l = len(packet)
+                packet += b'\x00' * (l_des - l)
+                raise IOError("Device disconnected.")
+            l = len(packet)
 
-        This is a blocking method, meaning it returns only once the requested
-        number of samples are available.
+        data = numpy.asarray(
+            struct.unpack('<'+'f'*self.total_channels*self.samples_per_read, packet))
+        data = numpy.transpose(data.reshape((-1, self.total_channels)))
+        # 打印data最后一行
+        print(data[-1])
+        # 每隔9个，取前三个通道
+        new_array = []
+        for i in self.channel_range:
+            new_array.append(data[i*9:i*9+3])
+        new_array = numpy.hstack(new_array)
+        return new_array
 
-        Returns
-        -------
-        data : ndarray, shape=(num_channels, num_samples)
-            Data read from the device. Each channel is a row and each column
-            is a point in time.
-        """
-        data = super(TrignoAccel, self).read(self.samples_per_read)
-        data = data[self.channel_range[0]:self.channel_range[1]+1, :]
-        return data
+    # def read(self):
+    #     """
+    #     Request a sample of data from the device.
+
+    #     This is a blocking method, meaning it returns only once the requested
+    #     number of samples are available.
+
+    #     Returns
+    #     -------
+    #     data : ndarray, shape=(num_channels, num_samples)
+    #         Data read from the device. Each channel is a row and each column
+    #         is a point in time.
+    #     """
+    #     data = super(TrignoAccel, self).read(self.samples_per_read)
+    #     data = data[self.channel_range[0]:self.channel_range[1]+1, :]
+    #     return data
