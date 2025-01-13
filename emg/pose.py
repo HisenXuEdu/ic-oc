@@ -5,17 +5,20 @@ from util.plot import *
 import threading
 from filterpy.kalman import KalmanFilter
 import matplotlib.pyplot as plt
+import math
 
 class EMG:
     def __init__(self, channel=1, host='127.0.0.1'):
         self.channel = channel
-        self.dev_emg = pytrigno.TrignoAccel(channel_range=(14,14), samples_per_read=18,
+        self.dev_emg = pytrigno.TrignoIMU(channel_range=(0,0), samples_per_read=36,
                     host=host)
         self.dev_emg.start()
         self.acc_data = np.array([[0.0, 0.0, 9.8], [0.0, 0.0, 9.8], [0.0, 0.0, 9.8]])  # 假设采样频率100Hz
         self.velocity = np.array([0.0 , 0.0, 0.0])
         self.position = np.array([0.0 , 0.0, 0.0])
         self.dt = 1/144
+
+        self.acc_data_list = []
 
     
     def get_single(self):
@@ -77,17 +80,21 @@ class EMG:
         #         print(f"Updated state: {kf.x}")
         #     p = kf.x
 
-        for i in range(120):
+        for i in range(30):
             acc_data = self.get_single()
             acc_data = acc_data.T
             print(acc_data)
             for i in range(1, len(acc_data)):
                 # z轴加速度减去重力加速度
-                acc_data[i][2] = acc_data[i][2] - 0.938
-                self.velocity = self.velocity + acc_data[i] * 9.81 * self.dt
-                self.position = self.position + self.velocity * self.dt
-                print(self.position)
-            p = self.position 
+                acc_data[i][2] = acc_data[i][2]
+                # self.velocity = self.velocity + acc_data[i] * 9.81 * self.dt
+                # self.position = self.position + self.velocity * self.dt
+                # print(self.position)
+                self.acc_data_list.append(acc_data[i])
+            p = self.position
+            
+        
+        
 
 def plot_viz(pose):
     global p
@@ -104,8 +111,13 @@ if __name__ == '__main__':
     p = [0, 0, 0, 0, 0, 0]
     x = [0, 0, 0, 0, 0, 0]
 
-    record = threading.Thread(target=plot_viz, args=(pose_list,))
-    record.daemon = True
-    record.start()
+    # record = threading.Thread(target=plot_viz, args=(pose_list,))
+    # record.daemon = True
+    # record.start()
 
     x = emg.get_pose(x)
+    # 打印加速度y
+    plt.plot(emg.acc_data_list)
+    # 设置坐标轴范围
+    plt.ylim(0, 1)
+    plt.show()
