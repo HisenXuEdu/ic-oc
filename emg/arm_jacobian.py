@@ -186,11 +186,12 @@ def update_joints(arm):
 if __name__ == '__main__':
 
     arm = Arm()
+
     param_values = {
-        'theta1': 0, 'theta2': pi/4, 'theta3': pi/6, 'theta4': pi/3, 'theta5': pi/2, 'theta6': pi/4, 'theta7': pi/6,
-        'd1': 0.5, 'd2': 0.3, 'd3': 0.4, 'd4': 0.6, 'd5': 0.2, 'd6': 0.3, 'd7': 0.1,
-        'a1': 0.3, 'a2': 0.4, 'a3': 0.5, 'a4': 0.6, 'a5': 0.7, 'a6': 0.8, 'a7': 0.9,
-        'alpha1': 0, 'alpha2': pi/2, 'alpha3': 0, 'alpha4': pi/2, 'alpha5': 0, 'alpha6': pi/4, 'alpha7': 0
+    'theta0': -pi/2, 'theta1': pi/2, 'theta2': 0, 'theta3': pi/2, 'theta4': 0, 'theta5': -pi/2, 'theta6': pi/2, 'theta7': 0,
+    'd0': 0, 'd1': 0, 'd2': 0, 'd3': 0.3, 'd4': 0, 'd5': 0.27, 'd6': 0, 'd7': 0,
+    'a0': 0, 'a1': 0, 'a2': 0, 'a3': 0, 'a4': 0, 'a5': 0, 'a6': 0, 'a7': 0.08,
+    'alpha0': -pi/2, 'alpha1': pi/2, 'alpha2': -pi/2, 'alpha3': pi/2, 'alpha4': -pi/2, 'alpha5': pi/2, 'alpha6': -pi/2, 'alpha7': pi
     }
     arm.set_parameters(param_values)
 
