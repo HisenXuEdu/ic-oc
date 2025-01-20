@@ -6,6 +6,8 @@ from matplotlib.gridspec import GridSpec
 import threading
 from time import sleep
 import threading
+import pytrigno as pytrigno
+import pandas as pd
 
 
 class Arm:
@@ -39,35 +41,26 @@ class Arm:
         self.ax1.clear()  # 清除当前图形
         self.ax2.clear()
 
-        # 地面网格
-        # x = np.linspace(-0.5, 0.5, 10)
-        # y = np.linspace(-0.5, 0.5, 10)
-        # X, Y = np.meshgrid(x, y)
-        # Z = np.zeros_like(X)
-        # self.ax1.plot_surface(X, Y, Z, color='green', alpha=0.3, edgecolor='black')
-
         roll, pitch, yaw = np.radians(self.angle)  # Example RPY angles
         R = self.rpy_to_rotation_matrix(roll, pitch, yaw)
 
         self.plot_axes(np.eye(3), self.ax1, label='Original', length = 0.3, color=['r', 'g', 'b'])  # Plot original axes
         # self.plot_axes(R, self.ax1, label='Rotated')           # Plot rotated axes
         self.plot_ellipsoid(R, self.ax1, center=[0, 0, 0], radii=self.K)
-        # self.ax1.legend()
-
-        # # 绘制xyz轴和陀螺仪角度
-        # self.ax1.quiver(0, 0, 0, 0.3, 0, 0, color='r')
-        # self.ax1.quiver(0, 0, 0, 0, 0.3, 0, color='g')
-        # self.ax1.quiver(0, 0, 0, 0, 0, 0.3, color='b')
-        # self.ax1.quiver(0, 0, 0, *self.angle, color='black')
 
         # 设置坐标轴范围
         self.ax1.set_xlim([-0.5, 0.5])
         self.ax1.set_ylim([-0.5, 0.5])
         self.ax1.set_zlim([-0.5, 0.5])
 
+        # 设置坐标轴标签
+        self.ax1.set_xlabel('X')
+        self.ax1.set_ylabel('Y')
+        self.ax1.set_zlabel('Z')
+
         # 计算出self.K沿着各轴的分量
         projected_K = self.calculate_projected_axis_lengths(self.K, R)
-        print(projected_K, R)
+        # print(projected_K, R)
         self.ax2.bar(['X', 'Y', 'Z'], projected_K, color=['b', 'b', 'b'])
         self.ax2.set_ylim([0, 1])
 
@@ -118,35 +111,79 @@ class Arm:
 
         ax.plot_surface(x, y, z, color='pink', alpha=0.5)
 
-        # 外圈黑色线包裹
-        u = np.linspace(0, 2 * np.pi, 20)
-        v = np.linspace(0, np.pi, 20)
-        x = radii[0] * np.outer(np.cos(u), np.sin(v))
-        y = radii[1] * np.outer(np.sin(u), np.sin(v))
-        z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
-        # Rotate and translate the ellipsoid
-        for i in range(len(x)):
-            for j in range(len(x)):
-                [x[i, j], y[i, j], z[i, j]] = np.dot(rotation_matrix, [x[i, j], y[i, j], z[i, j]]) + center
-        # 虚线
-        ax.plot_wireframe(x, y, z, color='black', alpha=0.8, linewidth=0.5, linestyle='--')
+        # # 外圈黑色线包裹
+        # u = np.linspace(0, 2 * np.pi, 20)
+        # v = np.linspace(0, np.pi, 20)
+        # x = radii[0] * np.outer(np.cos(u), np.sin(v))
+        # y = radii[1] * np.outer(np.sin(u), np.sin(v))
+        # z = radii[2] * np.outer(np.ones_like(u), np.cos(v))
+        # # Rotate and translate the ellipsoid
+        # for i in range(len(x)):
+        #     for j in range(len(x)):
+        #         [x[i, j], y[i, j], z[i, j]] = np.dot(rotation_matrix, [x[i, j], y[i, j], z[i, j]]) + center
+        # # 虚线
+        # ax.plot_wireframe(x, y, z, color='black', alpha=0.8, linewidth=0.5, linestyle='--')
     
     def calculate_projected_axis_lengths(self, radii, rotation_matrix):
         """Calculate the projected lengths of the ellipsoid along the x, y, and z axes."""
         projected_radii = np.zeros(3)
         for i in range(3):
-            projected_radii[i] = np.linalg.norm(np.dot(rotation_matrix[:, i], radii))
+            # projected_radii[i] = np.linalg.norm(np.dot(rotation_matrix[:, i], radii))
+            projected_radii[i] = 1 / np.sqrt((rotation_matrix[0, i]**2 / radii[0]**2) + (rotation_matrix[1, i]**2 / radii[1]**2) + (rotation_matrix[2, i]**2 / radii[2]**2))
+        # start_point = np.array([0, 0, 0])
+        # end_point = np.array([projected_radii[0], 0, 0])  # 沿 x 轴方向，长度为 1
+        # self.ax1.plot([start_point[0], end_point[0]], [start_point[1], end_point[1]], [start_point[2], end_point[2]], color='r')
+
+        # start_point = np.array([0, 0, 0])
+        # end_point = np.array([0, projected_radii[1],  0])  # 沿 x 轴方向，长度为 1
+        # self.ax1.plot([start_point[0], end_point[0]], [start_point[1], end_point[1]], [start_point[2], end_point[2]], color='r')
         return projected_radii
-    
+
+class EMG:
+    def __init__(self, channel=1, host='127.0.0.1'):
+        self.channel = channel
+        self.dev_emg = pytrigno.TrignoOrientation(channel_range=(0,0), samples_per_read=9,
+                    host=host)
+        self.dev_emg.start()
+        self.acc_data = np.array([[0.0, 0.0, 9.8], [0.0, 0.0, 9.8], [0.0, 0.0, 9.8]])  # 假设采样频率100Hz
+        self.velocity = np.array([0.0 , 0.0, 0.0])
+        self.position = np.array([0.0 , 0.0, 0.0])
+        self.dt = 1/144
+
+        self.acc_data_list = []
+        self.angle = np.array([0, 0, 0])
+
+    def get_single(self):
+        # while True:
+            x = self.dev_emg.read()
+            self.x = pd.DataFrame(x.T)
+            self.angle = self.x.iloc[-1, :].values
+            return self.angle
+
+# def update_data(arm):
+#     angle = arm.angle
+#     K = arm.K
+#     emg = EMG()
+#     while True:
+#         K = np.array([0.3, 0.4, 0.5])
+#         angle = np.array([angle[0], angle[1]+10, angle[2]+10])
+#         arm.update_data(K, angle)
+#         sleep(1)
+#     pass
+
 def update_data(arm):
     angle = arm.angle
     K = arm.K
+    emg = EMG()
+    # threading.Thread(target=emg.get_single).start()
     while True:
         K = np.array([0.3, 0.4, 0.5])
-        angle = np.array([angle[0], angle[1]+10, angle[2]+10])
+        angle = emg.get_single()
         arm.update_data(K, angle)
-        sleep(1)
+        print(angle)
+        # sleep(0.05)
     pass
+
 
 
 if __name__ == '__main__':
@@ -155,3 +192,4 @@ if __name__ == '__main__':
     update_thread.daemon = True
     update_thread.start()
     arm.plot_arm()
+

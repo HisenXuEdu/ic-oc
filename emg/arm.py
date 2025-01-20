@@ -13,7 +13,7 @@ import socket
 
 
 
-class RobotArm:
+class Arm:
     def __init__(self, joint_num=6, joints_alpha=[90, 0, 0, 90, -90, 0], joints_a=[0, 0.425, 0.39225, 0, 0, 0], 
                  joints_d=[0.089159, 0, 0, 0.10915, 0.09465, 0.0823], joints_theta=[0, 0, 0, 0, 0, 0], 
                  joint_angle=[0, 0, 0, 0, 0, 0], modified_dh=False):
@@ -41,9 +41,11 @@ class RobotArm:
         self.T = []
         self.jacobian = np.zeros((6, self.joint_num))
 
-        self.fig = plt.figure()
+
+        self.fig = plt.figure(('Robot Arm Visualization'), figsize=(12, 6))
         # 两张图，上面是3D图，下面是2D图
-        self.ax = self.fig.add_subplot(111, projection='3d')
+        self.ax1 = self.fig.add_subplot(121, projection='3d')
+        self.ax2 = self.fig.add_subplot(122)
 
 
         # 肌肉激活相关
@@ -51,34 +53,7 @@ class RobotArm:
         self.c2 = 0.1
         self.PB = 0.1
         self.PT = 0.1
-
-    def set_axes_equal(self, ax):
-    # 这一段是copy别人的。用处不是很大。
-        '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
-        cubes as cubes, etc..  This is one possible solution to Matplotlib's
-        ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
-        Input
-        ax: a matplotlib axis, e.g., as output from plt.gca().
-        '''
-
-        x_limits = ax.get_xlim3d()
-        y_limits = ax.get_ylim3d()
-        z_limits = ax.get_zlim3d()
-
-        x_range = abs(x_limits[1] - x_limits[0])
-        x_middle = np.mean(x_limits)
-        y_range = abs(y_limits[1] - y_limits[0])
-        y_middle = np.mean(y_limits)
-        z_range = abs(z_limits[1] - z_limits[0])
-        z_middle = np.mean(z_limits)
-
-        # The plot bounding box is a sphere in the sense of the infinity
-        # norm, hence I call half the max range the plot radius.
-        plot_radius = 0.5*max([x_range, y_range, z_range])
-
-        ax.set_xlim3d([x_middle - plot_radius, x_middle + plot_radius])
-        ax.set_ylim3d([y_middle - plot_radius, y_middle + plot_radius])
-        ax.set_zlim3d([z_middle - plot_radius, z_middle + plot_radius])
+        self.K_C = [1, 1, 1, 0, 0, 0]
 
     def dh_matrix(self, alpha, a, d, theta):
         """
@@ -130,9 +105,11 @@ class RobotArm:
         :param joints: 关节位置列表
         """
         self.joint_angle = joints
+        self.cal_P()
+        self.cal_K()
         print("RobotArm:",self.joint_angle)
     
-    def cal(self):
+    def cal_P(self):
         #    DH参数转转换矩阵T---------------------
         joint_hm = []
         for i in range(self.joint_num):
@@ -169,14 +146,17 @@ class RobotArm:
         J_inv = np.linalg.pinv(J)
         J_inv_T = J_inv.T
         acc = self.cal_acc()
-        K_J = np.zeros((7,))
-        G_j = np.zeros((7,))
-
-        K = np.dot(J.T, np.linalg.inv(np.dot(J, J.T)))
+        K_J = np.ones((7,7))
+        G_j = np.zeros((7,7))
         K_C = J_inv_T @ (acc*K_J - G_j) @ J_inv
-        return K
+        self.K_C = K_C
+        print(J)
+        print("K_C", np.diag(K_C))
+        return K_C
     
     def cal_acc(self):
+        self.PB = 1e-8
+        self.PT = 1e-8
         exp_term = np.exp(-self.c2 * (self.PB + self.PT))
         numerator = self.c1 * (1 - exp_term)
         denominator = 1 + exp_term
@@ -191,15 +171,14 @@ class RobotArm:
         更新关节位置
         :param joints: 关节位置列表
         """
-        self.cal()
-        self.ax.clear()  # 清除当前图形
+        self.ax1.clear()  # 清除当前图形
 
         # 地面网格
         x = np.linspace(-0.5, 0.5, 10)
         y = np.linspace(-0.5, 0.5, 10)
         X, Y = np.meshgrid(x, y)
         Z = np.zeros_like(X)
-        self.ax.plot_surface(X, Y, Z, color='green', alpha=0.3, edgecolor='black')
+        self.ax1.plot_surface(X, Y, Z, color='green', alpha=0.3, edgecolor='black')
 
         # 绘制连杆
         for i in range(len(self.X) - 1):
@@ -209,24 +188,31 @@ class RobotArm:
             x_values = [self.X[i], self.X[i+1]]
             y_values = [self.Y[i], self.Y[i+1]]
             z_values = [self.Z[i], self.Z[i+1]]
-            self.ax.plot(x_values, y_values, z_values, 'r-o', linewidth=5)
+            self.ax1.plot(x_values, y_values, z_values, 'r-o', linewidth=5)
         
         # 绘制关节 (球体)
         for joint in zip(self.X, self.Y, self.Z):
             self.plot_sphere(joint, radius=0.05, color='red')
 
         # 坐标轴标签
-        self.ax.set_xlabel('X')
-        self.ax.set_ylabel('Y')
-        self.ax.set_zlabel('Z')
-        self.ax.set_xlim([-0.5, 0.5])
-        self.ax.set_ylim([-0.5, 0.5])
-        self.ax.set_zlim([0, 0.8])
-        self.ax.set_title('3D Arm Joint Visualization')
+        self.ax1.set_xlabel('X')
+        self.ax1.set_ylabel('Y')
+        self.ax1.set_zlabel('Z')
+        self.ax1.set_xlim([-0.5, 0.5])
+        self.ax1.set_ylim([-0.5, 0.5])
+        self.ax1.set_zlim([0, 0.8])
+        self.ax1.set_title('3D Arm Joint Visualization')
 
         # 绘制末端执行器的坐标系
         self.plot_end_effector_axes()
 
+        self.ax2.clear()
+        # self.ax2.bar(['X','Y','Z'], self.K_C[:3], color='r', label='X')
+        self.ax2.bar('X', self.K_C[0][0], color='r', label='X')
+        self.ax2.bar('Y', self.K_C[1][1], color='g', label='Y')        
+        self.ax2.bar('Z', self.K_C[2][2], color='b', label='Z')
+
+        self.ax2.set_title('K_C')
     
     def plot_sphere(self, center, radius=0.05, color='red'):
         """
@@ -241,7 +227,7 @@ class RobotArm:
         x = center[0] + radius * np.outer(np.cos(u), np.sin(v))
         y = center[1] + radius * np.outer(np.sin(u), np.sin(v))
         z = center[2] + radius * np.outer(np.ones(np.size(u)), np.cos(v))
-        self.ax.plot_surface(x, y, z, color=color, alpha=0.6)
+        self.ax1.plot_surface(x, y, z, color=color, alpha=0.6)
 
     def plot_end_effector_axes(self):
         """
@@ -251,118 +237,36 @@ class RobotArm:
         orientation = self.T[-1][:3, :3]  # 末端执行器的旋转矩阵
         # 绘制
         # 绘制原点
-        self.ax.quiver(position[0], position[1], position[2], 0.1, 0, 0, color='r', length=0.1)
-        self.ax.quiver(position[0], position[1], position[2], 0, 0.1, 0, color='g', length=0.1)
-        self.ax.quiver(position[0], position[1], position[2], 0, 0, 0.1, color='b', length=0.1)
+        self.ax1.quiver(position[0], position[1], position[2], 0.1, 0, 0, color='r', length=0.1)
+        self.ax1.quiver(position[0], position[1], position[2], 0, 0.1, 0, color='g', length=0.1)
+        self.ax1.quiver(position[0], position[1], position[2], 0, 0, 0.1, color='b', length=0.1)
 
         # 绘制末端执行器的坐标系（X, Y, Z轴）
-        self.ax.quiver(position[0], position[1], position[2], orientation[0, 0], orientation[1, 0], orientation[2, 0], color='r', length=0.1)
-        self.ax.quiver(position[0], position[1], position[2], orientation[0, 1], orientation[1, 1], orientation[2, 1], color='g', length=0.1)
-        self.ax.quiver(position[0], position[1], position[2], orientation[0, 2], orientation[1, 2], orientation[2, 2], color='b', length=0.1)
-
+        self.ax1.quiver(position[0], position[1], position[2], orientation[0, 0], orientation[1, 0], orientation[2, 0], color='r', length=0.1)
+        self.ax1.quiver(position[0], position[1], position[2], orientation[0, 1], orientation[1, 1], orientation[2, 1], color='g', length=0.1)
+        self.ax1.quiver(position[0], position[1], position[2], orientation[0, 2], orientation[1, 2], orientation[2, 2], color='b', length=0.1)
 
 def update_joints(arm):
     # 每隔0.1秒更新一次关节位置
     joints = arm.joint_angle
     while True:
         # 最后一个关节的增加
-        joints = [joints[0], joints[1], joints[2], joints[3], joints[4], joints[5], joints[6]+10, joints[7]]
+        joints = [joints[0], joints[1], joints[2], joints[3], joints[4], joints[5], joints[6]]
         # 所有关节大于-360度小于360度
         joints = [j if j >= -360 else -360 for j in joints]
         joints = [j if j <= 360 else 360 for j in joints]
         arm.update_joints(joints)
-        time.sleep(0.3)
-
-def update_joints_cr5(arm, dashboard):
-    # 每隔0.1秒更新一次关节位置
-    joints = arm.joints_theta
-    while True:
-        # 最后一个关节的增加
-        angle = dashboard.GetAngle()
-        # 使用正则表达式提取花括号中的所有数字
-        angle = re.search(r'\{([^\}]+)\}', angle).group(1)
-
-        # 将提取出的字符串按逗号分隔并转换为浮动类型
-        angle = list(map(float, angle.split(',')))
-
-        print(angle)
-        joints = angle
-        # 所有关节大于-360度小于360度
-        joints = [j if j >= -360 else -360 for j in joints]
-        joints = [j if j <= 360 else 360 for j in joints]
-        arm.update_joints(joints)
-        time.sleep(0.3)
-
-def update_joints_com(arm, port=65432):
-    """通过本地电脑socket直接传输数据
-    Args:
-        arm (_type_): _description_
-        port (int, optional): _description_. Defaults to 65432.
-    """    
-    # 创建一个TCP/IP套接字
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # 连接到服务器
-    client_socket.connect(('localhost', port))
-    while True:
-        # 接收数据
-        data = client_socket.recv(1024)
-        if not data:
-            break
-        angle = re.search(r'\{([^\}]+)\}', data.decode()).group(1)
-        joints = list(map(float, angle.split(',')))
-
-        # 所有关节大于-360度小于360度
-        joints = [j if j >= -360 else -360 for j in joints]
-        joints = [j if j <= 360 else 360 for j in joints]
-        arm.update_joints(joints)
-
-
-def pub_angle(dashboard):
-    """发布关节角度
-       如果需要展示关节变化，在代码开启新线程执行代码，并启动多进程执行robot程序
-    Args:
-        dashboard (_type_): cr5的dashboard对象
-    """    
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # 绑定地址和端口
-    server_address = ('localhost', 65432)
-    server_socket.bind(server_address)
-
-    # 监听连接请求
-    server_socket.listen(1)
-
-    print("等待客户端连接...")
-    connection, client_address = server_socket.accept()
-
-    try:
-        print(f"连接成功: {client_address}")
-        while True:
-            # 最后一个关节的增加
-            angle = dashboard.GetAngle()
-            connection.sendall(angle.encode())
-            sleep(0.2)
-
-    finally:
-        connection.close()
-        server_socket.close()
+        time.sleep(1)
 
 
 if __name__ == '__main__':
-    # 直接执行代码
-    # robot_cr5 = RobotArm(joint_num=6, joints_alpha=[90, 0, 0, 90, -90, 0], joints_a=[0, 0.427, 0.357, 0, 0, 0], 
-    #              joints_d=[0.147, 0, 0, 0.116, 0.116, 0.105], joints_theta=[0, 90, 0, 90, 0, 0], joint_angle=[0, 0, 0, 0, 0, 0], modified_dh=False)
-    # joints_update_thread = threading.Thread(target=update_joints, args=(robot_cr5,))
-    # joints_update_thread.daemon = True
-    # joints_update_thread.start()
-    # robot_cr5.plot_arm()
-
     # 接受本地关节角
-    # 这里的第一个关机貌似没什么用，我看和第三个关节的效果一样
-    arm = RobotArm(joint_num=7, joints_alpha=[-90, 90, -90, 90, -90, 90, -90, 180], joints_a=[0, 0, 0, 0, 0, 0, 0, 0.08], 
-                 joints_d=[0, 0, 0, 0, 0.3, 0, 0.27, 0], joints_theta=[-90, 90, 0, 90, 0, -90, 90, 0],joint_angle=[0, 0, 0, 0, 0, 90, 0, 0], modified_dh=False)
-    # joints_update_thread = threading.Thread(target=update_joints, args=(arm,))
-    # joints_update_thread.daemon = True
-    # joints_update_thread.start()
+    # 这里的第一个关节貌似没什么用，我看和第三个关节的效果一样
+    # arm = RobotArm(joint_num=8, joints_alpha=[-90, 90, -90, 90, -90, 90, -90, 180], joints_a=[0, 0, 0, 0, 0, 0, 0, 0.08], 
+    #              joints_d=[0, 0, 0, 0, 0.3, 0, 0.27, 0], joints_theta=[-90, 90, 0, 90, 0, -90, 90, 0],joint_angle=[90, 90, 0, 0, 0, 90, 0, -90], modified_dh=False)
+    arm = Arm(joint_num=7, joints_alpha=[90, -90, 90, -90, 90, -90, 180], joints_a=[0, 0, 0, 0, 0, 0, 0.08], 
+                joints_d=[0, 0, 0, 0.3, 0, 0.27, 0], joints_theta=[90, 0, 90, 0, -90, 90, 0],joint_angle=[0, 0, 0, 0, 90, 0, -90], modified_dh=False)
+    joints_update_thread = threading.Thread(target=update_joints, args=(arm,))
+    joints_update_thread.daemon = True
+    joints_update_thread.start()
     arm.plot_arm()
