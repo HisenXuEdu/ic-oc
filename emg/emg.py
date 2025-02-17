@@ -130,7 +130,7 @@ class Emg_S:
         x=np.abs(x)
         x=np.mean(x,axis=1)
         # print(self.x)
-        self.normalise()
+        # self.normalise()
         self.filter_data(f=(20,50), butterworth_order=4, btype='bandpass')
         self.rectify_data()
         data_EMG = np.array(self.x)
