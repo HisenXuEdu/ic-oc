@@ -140,6 +140,7 @@ class Arm:
         return projected_radii
 
 class EMG:
+    # 要将姿态设置为RPY模式！！！
     def __init__(self, channel=1, host='127.0.0.1'):
         self.channel = channel
         self.dev_emg = pytrigno.TrignoOrientation(channel_range=(0,0), samples_per_read=9,
