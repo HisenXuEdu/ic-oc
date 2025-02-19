@@ -68,7 +68,8 @@ def plot_viz():
         force_list.append(force_)
         pose_list.append(pose*1000-initial_pose[:3]+euler_)
         euler_list.append([euler_[0],euler_[1],euler_[2]])
-        if(len(force_list)>1000):
+        print(len(force_list))
+        if(len(force_list)>500):
             force_list = pd.DataFrame(force_list, columns=None)
             force_list.to_csv('./Data/FORCE6.csv', index=None)
             pose_list = pd.DataFrame(pose_list, columns=None)
@@ -85,7 +86,7 @@ def change_para():
         data_EMG = emg.get_single()
         K_list.append(data_EMG)
         print(data_EMG)
-        if data_EMG[0]<0.00005:
+        if data_EMG[1]<0.00005:
             print(1)
             # ic.change_para(m = [200,10,200,200,2,2],d = [1200,400,1000,1200,12,12],k = [0,900,0,0,5,5])
             # ic.change_para(m = [200,10,200,200,2,2],d = [250,400,1000,1200,12,12],k = [0,1500,0,0,5,5])
