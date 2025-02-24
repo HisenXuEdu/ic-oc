@@ -68,9 +68,9 @@ class Force():
         return cur
     
     def __filt(self,force):
-        for i in range(0,len(force)):
-            if force[i]<1 and force[i]>-1:
-                force[i] = 0
+        # for i in range(0,len(force)):
+        #     if force[i]<1 and force[i]>-1:
+        #         force[i] = 0
         return force
     
 # def initforce():

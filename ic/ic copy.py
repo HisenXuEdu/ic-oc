@@ -7,7 +7,7 @@ import sys
 
 class IC():
     def __init__(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5],
-                    initial_pose = [138.360397/1000,-472.066620/1000,407.361847/1000, 179.488663,0.264109,179.605057], forward_force=np.zeros(6), FMAX = 20):
+                    initial_pose = [138.360397/1000,-472.066620/1000,407.361847/1000, 179.488663,0.264109,179.605057], forward_force=np.zeros(6), FMAX = 40):
 
         # admittance parameters
         self.M_ = np.diag(m)
@@ -37,8 +37,7 @@ class IC():
         self.sec = 1.0 / loop_rate
 
         self.last_error = np.zeros(6)
-        
-        self.le = np.zeros(6)
+
         self.FMAX = FMAX
 
     
@@ -94,7 +93,7 @@ class IC():
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
     
-    def compute_admittance_ff(self, force=np.zeros(6),limit=False):
+    def compute_admittance_ff(self, force=np.zeros(6),limit=False) -> tuple[np.ndarray, np.ndarray]:
         """根据前馈力单步计算导纳API，要先执行set_forward_force
 
         Args:
@@ -128,7 +127,7 @@ class IC():
         euler = self.arm_desired_pose_[3:6] 
         return pose, euler
     
-    def compute_admittance_env(self, force=np.zeros(6),limit=False):
+    def compute_admittance_env(self, force=np.zeros(6),limit=False) -> tuple[np.ndarray, np.ndarray]:
         self.emergency_stop(force)
         error_force = np.zeros(6)
         if force[2] > 0:
@@ -138,22 +137,7 @@ class IC():
         error[0:3] = self.arm_desired_pose_[0:3]  - self.desired_pose_position_
         error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
-
-        forward_force = self.forward_force - self.last_error - 0.1*(error_force - self.le)
-        # 限制每个轴的forward_force的绝对值不大于0.5*self.forward_force
-        for i in range(6):
-            if forward_force[i] > 1.5*np.abs(self.forward_force[i]):
-                forward_force[i] = 1.5*np.abs(self.forward_force[i])
-            if forward_force[i] < -1.5*np.abs(self.forward_force[i]):
-                forward_force[i] = -1.5*np.abs(self.forward_force[i])
-        
-        if np.linalg.norm(forward_force[:3]) > 10:
-            print("Forward FORCE Error!! Forward FORCE = ", forward_force)
-            sys.exit()
-        print(forward_force)
-
-        force -= forward_force
-
+        force -= (self.forward_force - self.last_error)
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
         self.__limit_acc(arm_desired_accelaration)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
@@ -166,15 +150,6 @@ class IC():
             pose = self.__limit(pose) #这里仅实现了对xyz的限位
         euler = self.arm_desired_pose_[3:6] 
         self.last_error = self.last_error + 0.2*error_force
-        # 限制每个轴的self.last_error的绝对值不大于0.5*self.forward_force
-
-        for i in range(6):
-            if self.last_error[i] > 0.5*np.abs(self.forward_force[i]):
-                self.last_error[i] = 0.5*np.abs(self.forward_force[i])
-            if self.last_error[i] < -0.5*np.abs(self.forward_force[i]):
-                self.last_error[i] = -0.5*np.abs(self.forward_force[i])
-
-        self.le = error_force
         # self.last_error = 0.99*(self.last_error + 0.6*error_force)
         return pose, euler
 
@@ -202,11 +177,13 @@ class IC():
 
 
     
-    def change_para(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5]):
-        self.M_ = np.diag(m)
-        self.D_ = np.diag(d)
-        self.K_ = np.diag(k)
-        # print(self.K_)
+    def change_para(self, m = None, d = None, k = None):
+        if m is not None:
+            self.M_ = np.diag(m)
+        if d is not None:
+            self.D_ = np.diag(d)
+        if k is not None:
+            self.K_ = np.diag(k)
 
     
     def move_single(self, pose):
