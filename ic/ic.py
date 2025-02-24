@@ -131,7 +131,7 @@ class IC():
         error[0:3] = self.arm_desired_pose_[0:3]  - self.desired_pose_position_
         error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
-        force -= (self.forward_force - self.last_error - 0.2*(error_force - self.le))
+        force -= (self.forward_force - self.last_error - 0.1*(error_force - self.le))
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
         self.__limit_acc(arm_desired_accelaration)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
