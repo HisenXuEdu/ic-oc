@@ -27,7 +27,7 @@ class Env():
         self.k = 5000
 
     def gen_f(self, x, y):
-        ex = self.func_env_vk(y)
+        ex = self.func_flat(y)
         if(x > ex):
             return 0
         return self.k * (ex - x)
@@ -51,6 +51,9 @@ class Env():
         else:
             self.change_k(1000)
             return 0.03 * x + 0.24
+    
+    def func_flat(self, x):
+        return 0.0
     
     def change_k(self, k):
         self.k = k
@@ -94,53 +97,16 @@ stop_thread = True
 
 # 绘制图像
 import matplotlib.pyplot as plt
-# plt.figure()
+plt.figure(figsize=(7, 3.5))
 # plt.plot(np.arange(n)/100, pose_list[:,2], label=r'$x_c$', color='blue', linewidth=1.5)
-# # plt.plot(np.arange(n)/100, pose_list_c[:,2], label=r'$x_c$', color='green', linewidth=1.5)
-# # 绘制环境曲线
-# plt.plot(np.arange(n)/100, [env.func_env_sin(0.01*i) for i in range(n)], label=r'$x_e$', color='r', linestyle='--', linewidth=1.5)
-# # 添加网格线
-# plt.grid(color='gray', linestyle='--', linewidth=0.5)
-# # plt.ylim(-0.15, 0.15)
-
-# # 添加标题和坐标轴标签
-# plt.title(r'Pose', fontsize=18)
-# plt.xlabel(r'$t\ /\ s$', fontsize=15)
-# plt.ylabel(r'$x\ /\ m$', fontsize=15)
-
-# # 添加图例
-# plt.legend(fontsize=15)
-# # 刻度字体大小
-# plt.xticks(fontsize=15)  # X 轴刻度
-# plt.yticks(fontsize=15)  # Y 轴刻度
-
-# plt.tight_layout()
-
-# plt.figure()
-
-# plt.plot(np.arange(n)/100, pose_list_c[:,2], label=r'$x_c$', color='green', linewidth=1.5)
-
-
-
-
+plt.plot(np.arange(n)/100, pose_list_c[:,2], label=r'$x_c$', color='green', linewidth=1.5)
 # 绘制环境曲线
-fig = plt.figure(figsize=(7, 3.5))
-plt.plot(np.arange(200) / 100, [env.func_env_vk(0.01 * i) for i in range(200)],
-         label=r'$x_{e1}, k=3000$', color='#FF9999', linestyle='--', linewidth=1.5)  # 浅红色
-plt.plot(np.arange(200, 600) / 100, [env.func_env_vk(0.01 * (i + 200)) for i in range(400)],
-         label=r'$x_{e2}, k=5000$', color='#FF6666', linestyle='--', linewidth=1.5)  # 中红色
-plt.plot(np.arange(600, 1000) / 100, [env.func_env_vk(0.01 * (i + 600)) for i in range(400)],
-         label=r'$x_{e3}, k=1000$', color='#FF3333', linestyle='--', linewidth=1.5)  # 深红色
-
-plt.plot(np.arange(n) / 100, pose_list[:, 2], label=r'$x_c$', color='blue', linewidth=1.5)
-# plt.plot(np.arange(n)/100, pose_list_c[:,2], label=r'$x_c$', color='green', linewidth=1.5)
-
+plt.plot(np.arange(n)/100, [env.func_flat(0.01*i) for i in range(n)], label=r'$x_e$', color='r', linestyle='--', linewidth=1.5)
 # 添加网格线
 plt.grid(color='gray', linestyle='--', linewidth=0.5)
-# plt.ylim(-0.15, 0.15)
+plt.ylim(-0.1, 0.4)
 
 # 添加标题和坐标轴标签
-# plt.title(r'Pose', fontsize=16)
 plt.xlabel("Time(s)", fontsize=16)
 plt.ylabel("Pose(m)", fontsize=18, labelpad=10)
 
@@ -152,10 +118,46 @@ plt.yticks(fontsize=15)  # Y 轴刻度
 
 plt.tight_layout()
 
+# plt.figure()
+
+# plt.plot(np.arange(n)/100, pose_list_c[:,2], label=r'$x_c$', color='green', linewidth=1.5)
+
+
+
+
+# # 绘制环境曲线
+# fig = plt.figure(figsize=(7, 3.5))
+# plt.plot(np.arange(200) / 100, [env.func_env_vk(0.01 * i) for i in range(200)],
+#          label=r'$x_{e1}, k=3000$', color='#FF9999', linestyle='--', linewidth=1.5)  # 浅红色
+# plt.plot(np.arange(200, 600) / 100, [env.func_env_vk(0.01 * (i + 200)) for i in range(400)],
+#          label=r'$x_{e2}, k=5000$', color='#FF6666', linestyle='--', linewidth=1.5)  # 中红色
+# plt.plot(np.arange(600, 1000) / 100, [env.func_env_vk(0.01 * (i + 600)) for i in range(400)],
+#          label=r'$x_{e3}, k=1000$', color='#FF3333', linestyle='--', linewidth=1.5)  # 深红色
+
+# plt.plot(np.arange(n) / 100, pose_list[:, 2], label=r'$x_c$', color='blue', linewidth=1.5)
+# # plt.plot(np.arange(n)/100, pose_list_c[:,2], label=r'$x_c$', color='green', linewidth=1.5)
+
+# # 添加网格线
+# plt.grid(color='gray', linestyle='--', linewidth=0.5)
+# # plt.ylim(-0.15, 0.15)
+
+# # 添加标题和坐标轴标签
+# # plt.title(r'Pose', fontsize=16)
+# plt.xlabel("Time(s)", fontsize=16)
+# plt.ylabel("Pose(m)", fontsize=18, labelpad=10)
+
+# # 添加图例
+# plt.legend(fontsize=13)
+# # 刻度字体大小
+# plt.xticks(fontsize=15)  # X 轴刻度
+# plt.yticks(fontsize=15)  # Y 轴刻度
+
+# plt.tight_layout()
+
 
 plt.figure(figsize=(7, 3.5))
-plt.plot(np.arange(n)/100, force_list[:,2], label=r'$F_e$', color='blue', linewidth=1.5)
-# plt.plot(np.arange(n)/100, force_list_c[:,2], label=r'$F_c$', color='green', linewidth=1.5)
+# plt.plot(np.arange(n)/100, force_list[:,2], label=r'$F_e$', color='blue', linewidth=1.5)
+plt.plot(np.arange(n)/100, force_list_c[:,2], label=r'$F_c$', color='green', linewidth=1.5)
 # plt.ylim(0, 100)
 # 绘制期望力虚线
 plt.plot(np.arange(n)/100, np.ones(n) * des_force, label=r'$F_d$', color = 'r', linestyle='--', linewidth=1.5)
