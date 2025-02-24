@@ -104,7 +104,7 @@ if __name__ == '__main__':
         tra.daemon = True
         tra.start()
 
-    ic.set_forward_force(np.array([0,0,5,0,0,0]))
+    ic.set_forward_force(np.array([0,0,8,0,0,0]))
     # ic.change_para(m=[2, 2, 100, 2, 2, 2], d=[32, 25, 2000, 12, 12, 12], k=[128, 128, 0, 5, 5, 5])
     # ic.change_para(m=[2, 2, 100, 0.1, 0.1, 0.1], d=[32, 25, 2000, 2, 2, 2], k=[128, 128, 0, 0.1, 0.1, 0.1])
     # ic.change_para(m=[2, 2, 100, 0.5, 0.5, 0.5], d=[32, 25, 2000, 12, 12, 12], k=[400, 400, 0, 5, 5, 5])
@@ -122,9 +122,11 @@ if __name__ == '__main__':
         # wrench_external_ = [force[1]/10,-force[2]/3,-force[0]/10,force[4]*10,-force[5]*10,-force[3]*10]
         force_ = [-force.force[1],-force.force[0],-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]
         force_list.append(force_)
-        force_ = [-force.force[1],-force.force[0],-force.force[2],0,0,0]
+        force_ = [-force.force[1],0,-force.force[2],force.force[4]*10,force.force[3]*10,-force.force[5]*10]
+        force_ = [-force.force[1],0,-force.force[2],0,0,0]
+        # force_ = [-force.force[1],0,-force.force[2],0,0,0]
         pose, euler = ic.compute_admittance_env(force_)
-        pose_list.append([pose[0]*1000,pose[1]*1000,pose[2]*1000])
+        pose_list.append([pose[0]*1000,pose[1]*1000,pose[2]*1000, euler[0], euler[1], euler[2]])
         # print(pose[0]*1000,pose[1]*1000,pose[2]*1000,initial_pose[3],initial_pose[4],initial_pose[5])
         move.ServoP(pose[0]*1000,pose[1]*1000,pose[2]*1000,euler[0],euler[1],euler[2])
         while time.time() - start_time < 0.01:

@@ -147,7 +147,7 @@ class IC():
             if forward_force[i] < -1.5*np.abs(self.forward_force[i]):
                 forward_force[i] = -1.5*np.abs(self.forward_force[i])
         
-        if np.linalg.norm(forward_force[:3]) > 10:
+        if np.linalg.norm(forward_force[:3]) > 15:
             print("Forward FORCE Error!! Forward FORCE = ", forward_force)
             sys.exit()
         print(forward_force)
