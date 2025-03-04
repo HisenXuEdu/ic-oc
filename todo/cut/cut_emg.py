@@ -23,6 +23,7 @@ from util.plot import Plot
 from util.plot import *
 from util.util import *
 from emg.emg import *
+from model.LSTM import *
 
 def connect_robot():
     try:
@@ -143,7 +144,21 @@ def change_para1():
         ic.change_para(m = [200,10,200,200,2,2],d = [250,dc,1000,1200,12,12],k = [0,kc,0,0,5,5])
 
 
-
+def change_para_emg():
+        global emg, ic
+        while True:
+            data_EMG = emg.get_single_network()
+            # K_list.append(data_EMG)
+            print(data_EMG)
+            res = result(model, x, y)
+            kc = (1000 - (K_list[-1][0]*10000000-400))/2
+            dc = kc/5
+            if(kc<200): 
+                kc=100
+            if(dc<40):
+                dc=20
+            print(kc, dc)
+            ic.change_para(m = [200,10,200,200,2,2],d = [250,dc,1000,1200,12,12],k = [0,kc,0,0,5,5])
 
 
 if __name__ == '__main__':
@@ -155,6 +170,14 @@ if __name__ == '__main__':
     plot = True
 
     K_list = []
+
+
+    win_len = 20
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = MyModel(6, win_len,1)
+    model.to(device)
+    checkpoint = torch.load('model_path/LSTMi1o1.pth')
+    model.load_state_dict(checkpoint['net'])
 
 
 

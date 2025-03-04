@@ -21,7 +21,7 @@ import pytrigno as pytrigno
 
 # from process.pre_process import *
 from process.feature import *
-from model.FCNN import *
+from model.LSTM import *
 import torch
 
 
@@ -137,6 +137,27 @@ class Emg_S:
         data_EMG = np.abs(data_EMG)
         data_EMG = np.mean(data_EMG)
         return x
+    
+    
+    def get_single_network(self):
+        x = self.dev_emg.read()
+        self.x = pd.DataFrame(x.T)
+        x=np.abs(x)
+        x=np.mean(x,axis=1)
+        # print(self.x)
+        # self.normalise()
+        self.filter_data(f=(20,50), butterworth_order=4, btype='bandpass')
+        self.rectify_data()
+        self.envelope_data()
+        # data_EMG = np.array(self.x)
+        # data_EMG = np.abs(data_EMG)
+        # data_EMG = np.mean(data_EMG)
+        return x
+    
+    #包络
+    def envelope_data(self, window = 200):
+        self.x = pd.DataFrame(self.x).rolling(window=window, center=False).mean()
+        self.x = self.x.dropna()
     
     def get_K(self):
         x = self.get_single()

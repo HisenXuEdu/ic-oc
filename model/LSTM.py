@@ -35,6 +35,8 @@ class MyModel(nn.Module):
         # x = self.activation(x)
         x = self.dropout_2(x)
         x = self.predictions(x)
+        #加入sigmod
+        x = torch.sigmoid(x)
         #x = torch.softmax(x, dim=1)
         return x
     
@@ -60,6 +62,7 @@ def DatatoTorch(x, y, size, device):
 
 def train(model, loader, device, epoch, name):
     # criterion = nn.L1Loss()
+    #元素差值平方和的均值
     criterion=nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
     model.to(device)
@@ -102,3 +105,14 @@ def result(model, x, y):
             list.append(outputs[0].numpy().tolist())
     data=pd.DataFrame(list)
     return data
+
+def result_realtime(model, x):
+    with torch.no_grad():
+        outputs = model(torch.unsqueeze(x, dim=0)).cpu()
+    # list=[[]]
+    # for i, data in enumerate(x):
+    #     with torch.no_grad():
+    #         outputs = model(torch.unsqueeze(x[i], dim=0)).cpu()
+    #         list.append(outputs[0].numpy().tolist())
+    # data=pd.DataFrame(list)
+    return outputs[0].numpy().tolist()
