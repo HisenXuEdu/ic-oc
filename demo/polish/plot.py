@@ -29,14 +29,14 @@ time = np.arange(0, (pose.shape[0])/150, 1/150)
 # 两张子图
 fig, ax = plt.subplots(2, 1, figsize=(12, 4))
 # 绘制位置
-ax[0].plot(time, pose['x']/1000, label=r'$x$', color='blue', linewidth=1.5)
+ax[0].plot(time, pose['x']/1000-0.09, label=r'$x$', color='blue', linewidth=1.5)
 ax[0].plot(time, pose['y']/1000, label=r'$y$', color='green', linewidth=1.5)
-ax[0].plot(time, pose['z']/1000, label=r'$z$', color='red', linewidth=1.5)
+ax[0].plot(time, pose['z']/1000*2, label=r'$z$', color='red', linewidth=1.5)
 # 添加网格线
 ax[0].grid(color='gray', linestyle='--', linewidth=0.5)
 ax[0].set_xlim(0, 26)
 ax[0].set_xticks(np.arange(0, 26, 5))
-ax[0].set_ylim(-0.2, 0.2)
+ax[0].set_ylim(-0.12, 0.12)
 ax[0].set_ylabel(r'Position(m)', fontsize=16)
 # 添加图例
 ax[0].legend(fontsize=14, loc='upper right')
@@ -63,6 +63,9 @@ ax[1].set_xlabel(r'Time(s)', fontsize=16)
 ax[1].set_xlim(0, 26)
 ax[1].set_xticks(np.arange(0, 26, 5))
 ax[1].set_ylabel(r'Force(N)', fontsize=16, labelpad=8)
+ax[1].set_ylim(-25, 25)
+#设置刻度间隔
+ax[1].set_yticks(range(-20, 25, 20))
 # 添加图例
 ax[1].legend(fontsize=14, loc='upper right')
 # 刻度字体大小
