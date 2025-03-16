@@ -46,18 +46,18 @@ ax[0].tick_params(labelsize=14)
 ax[0].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
 
 # 绘制力
-ax[1].plot(time, force['x'], label=r'$fx$', color='blue', linewidth=1.5)
-ax[1].plot(time, force['y'], label=r'$fy$', color='green', linewidth=1.5)
-ax[1].plot(time, force['z'], label=r'$fz$', color='red', linewidth=1.5)
+ax[1].plot(time, force['x'], label=r'$Fx$', color='blue', linewidth=1.5)
+ax[1].plot(time, force['y'], label=r'$Fy$', color='green', linewidth=1.5)
+ax[1].plot(time, force['z'], label=r'$Fz$', color='red', linewidth=1.5)
 
 # 计算force['z']在500-3000的均值
-print(force['z'][100:3800].mean())
+print(force['z'][500:2000].mean())
 # 在曲线上绘制均值
-ax[1].plot([0, 26], [force['z'][500:3000].mean(), force['z'][500:3000].mean()], label=r'$fz_{mean}$', color='gray', linewidth=3, linestyle='--')
+ax[1].plot([0, 26], [force['z'][500:3000].mean(), force['z'][500:3000].mean()], label=r'$Fz_{mean}$', color='gray', linewidth=3, linestyle='--')
 
 # 添加网格线
 ax[1].grid(color='gray', linestyle='--', linewidth=0.5)
-ax[1].set_ylim(-18, 18)
+ax[1].set_ylim(-22, 25)
 # 添加标题和坐标轴标签
 ax[1].set_xlabel(r'Time(s)', fontsize=16)
 ax[1].set_xlim(0, 26)
@@ -108,15 +108,15 @@ ax[0].tick_params(labelsize=14)
 ax[0].tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
 
 # 绘制力
-ax[1].plot(time, force['x'], label=r'$fx$', color='blue', linewidth=1.5)
-ax[1].plot(time, force['y'], label=r'$fy$', color='green', linewidth=1.5)
-ax[1].plot(time, force['z'], label=r'$fz$', color='red', linewidth=1.5)
+ax[1].plot(time, force['x'], label=r'$Fx$', color='blue', linewidth=1.5)
+ax[1].plot(time, force['y'], label=r'$Fy$', color='green', linewidth=1.5)
+ax[1].plot(time, force['z'], label=r'$Fz$', color='red', linewidth=1.5)
 # 添加网格线
 ax[1].grid(color='gray', linestyle='--', linewidth=0.5)
 ax[1].set_xlim(0, 22.5)
 # 设置x轴刻度间隔
 ax[1].set_xticks(np.arange(0, 21, 5))
-ax[1].set_ylim(-20, 20)
+ax[1].set_ylim(-22, 25)
 # 添加标题和坐标轴标签
 ax[1].set_xlabel(r'Time(s)', fontsize=16)
 # 设置偏移10

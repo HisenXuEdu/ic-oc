@@ -24,7 +24,7 @@ p2 = (y2.cumsum()-0.25)/80
 a2 = y2.diff()
 # 对x进行差分后的数据进行绘图
 # 创建一个绘图对象
-fig, ax1 = plt.subplots(figsize=(12, 6))
+fig, ax1 = plt.subplots(figsize=(12, 3))
 
 # 绘制第一个曲线，使用 ax1
 # ax1.plot(p2, y2, 'lightsteelblue', label='v')
