@@ -74,10 +74,11 @@ if __name__ == '__main__':
 
 
     dashboard, move = connect_robot()
+    dashboard.EnableRobot()
     dashboard.ClearError()
     dashboard.SetSafeSkin(0)
     dashboard.SetCollisionLevel(1)
-    dashboard.SpeedFactor(60)
+    dashboard.SpeedFactor(30)
 
 
     force=Force()
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     # ic.change_para(m=[2, 2, 100, 0.1, 0.1, 0.1], d=[32, 25, 2000, 2, 2, 2], k=[128, 128, 0, 0.1, 0.1, 0.1])
     # ic.change_para(m=[2, 2, 100, 0.5, 0.5, 0.5], d=[32, 25, 2000, 12, 12, 12], k=[400, 400, 0, 5, 5, 5])
     # ic.change_para(m=[2, 2, 10, 0.2, 0.2, 0.2], d=[32, 25, 200, 3, 3, 3], k=[400, 400, 0, 0.5, 0.5, 0.5])
-    ic.change_para(m=[10, 10, 5, 0.1, 0.1, 0.1], d=[600, 600, 1000, 2, 2, 2], k=[800, 800, 0, 0.5, 0.5, 0.5])
+    ic.change_para(m=[10, 10, 50, 0.1, 0.1, 0.1], d=[600, 600, 3000, 2, 2, 2], k=[800, 800, 0, 0.5, 0.5, 0.5])
 
 
     force_list = []

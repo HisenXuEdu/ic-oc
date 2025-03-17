@@ -7,14 +7,16 @@ pose = pd.read_csv('./demo/polish/data/pose.csv')
 force = pd.read_csv('./demo/polish/data/force.csv')
 pose = pd.read_csv('./demo/polish/data224/good/pose1200.csv')
 force = pd.read_csv('./demo/polish/data224/good/force1200.csv')
+pose = pd.read_csv('./demo/polish/data224/pose_2025-03-17-15-05-09.csv')
+force = pd.read_csv('./demo/polish/data224/force_2025-03-17-15-05-09.csv')
 # pose = pd.read_csv('./demo/polish/data224/good/pose_2025-02-24-15-29-43.csv')
 # force = pd.read_csv('./demo/polish/data224/good/force_2025-02-24-15-29-43.csv')
 # 取100到350的数据
 # pose = pose[50:350]
 # force = force[50:350]
 # 加入头部
-pose.columns = ['x', 'y', 'z']
-# pose.columns = ['x', 'y', 'z', 'R', 'P', 'Y']
+# pose.columns = ['x', 'y', 'z']
+pose.columns = ['x', 'y', 'z', 'R', 'P', 'Y']
 force.columns = ['x', 'y', 'z', 'rx', 'ry', 'rz']
 
 # 对force进行滤波

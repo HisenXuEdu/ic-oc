@@ -2,8 +2,8 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 path = 'demo/polish/data224/'
-force_file = 'force_2025-02-24-15-23-07.csv'
-pose_file = 'pose_2025-02-24-15-23-07.csv'
+force_file = 'force_2025-03-17-15-05-09.csv'
+pose_file = 'pose_2025-03-17-15-05-09.csv'
 
 # 绘制力的图像
 fig = plt.figure()
