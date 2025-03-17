@@ -141,9 +141,10 @@ class Emg_S:
     
     def get_single_network(self):
         x = self.dev_emg.read()
+        print(x)
         self.x = pd.DataFrame(x.T)
         x=np.abs(x)
-        x=np.mean(x,axis=1)
+        # x=np.mean(x,axis=1)
         # print(self.x)
         # self.normalise()
         self.filter_data(f=(20,50), butterworth_order=4, btype='bandpass')
