@@ -27,7 +27,7 @@ class Env():
         self.k = 5000
 
     def gen_f(self, x, y):
-        ex = self.func_env_scope(y)
+        ex = self.func_env_random(y)
         if(x > ex):
             return 0
         return self.k * (ex - x)
@@ -39,17 +39,17 @@ class Env():
         return 0.05 * x
 
     def func_env_random(self, x):
-        return 0.15  * np.sin(x) * np.exp(-0.2*x)
+        return 0.1 * np.sin(x) * np.exp(-0.2*x) * np.log(x+1) * (0.6*np.cos(x)+1)
     
     def func_env_vk(self, x):
-        if x < 2:
-            self.change_k(3000)
-            return 0.05 * x
-        elif x < 6:
+        if x < 2.0:
             self.change_k(5000)
+            return 0.05 * x
+        elif x < 6.0:
+            self.change_k(7000)
             return 0.08 * x - 0.06
         else:
-            self.change_k(1000)
+            self.change_k(9000)
             return 0.03 * x + 0.24
     
     def func_flat(self, x):
@@ -92,20 +92,20 @@ for i in range(n):
 
     y += 0.01
     force[2] = env.gen_f(pose[2], y)
-    # force[2] = 0 if i < 3 else env.gen_f(pose_list[i-2][2], y)
+    force[2] = 0 if i < 3 else env.gen_f(pose_list[i-2][2], y)
     # 传输力的深拷贝
     pose, euler = ic.compute_admittance_env(copy.deepcopy(force))
     pose_list[i] = pose
     force_list[i] = force
 
-    force_c[2] = env.gen_f(pose_c[2], y)
-    # force_c[2] = 0 if i < 3 else env.gen_f(pose_list_c[i-2][2], y)
+    # force_c[2] = env.gen_f(pose_c[2], y)
+    force_c[2] = 0 if i < 3 else env.gen_f(pose_list_c[i-2][2], y)
     pose_c, euler = ic_c.compute_admittance_ff(copy.deepcopy(force_c))
     pose_list_c[i] = pose_c
     force_list_c[i] = force_c
 
     force_raw[2] = env.gen_f(pose_raw[2], y)
-    # force_raw[2] = 0 if i < 3 else env.gen_f(pose_list_raw[i-2][2], y)
+    force_raw[2] = 0 if i < 3 else env.gen_f(pose_list_raw[i-2][2], y)
     pose_raw, euler = ic_raw.compute_admittance_env_raw(copy.deepcopy(force_raw))
     pose_list_raw[i] = pose_raw
     force_list_raw[i] = force_raw
@@ -121,10 +121,10 @@ plt.figure(figsize=(7, 3.5))
 plt.plot(np.arange(n)/100, pose_list[:,2], label=r'$x_c$', color='blue', linewidth=1.5)
 # plt.plot(np.arange(n)/100, pose_list_c[:,2], label=r'$x_c$', color='green', linewidth=1.5)
 # 绘制环境曲线
-plt.plot(np.arange(n)/100, [env.func_flat(0.01*i) for i in range(n)], label=r'$x_e$', color='r', linestyle='--', linewidth=1.5)
+plt.plot(np.arange(n)/100, [env.func_env_vk(0.01*i) for i in range(n)], label=r'$x_e$', color='r', linestyle='--', linewidth=1.5)
 # 添加网格线
 plt.grid(color='gray', linestyle='--', linewidth=0.5)
-plt.ylim(-0.1, 0.4)
+# plt.ylim(-0.12, 0.4)
 
 # 添加标题和坐标轴标签
 plt.xlabel("Time(s)", fontsize=16)
@@ -194,8 +194,9 @@ plt.grid(color='gray', linestyle='--', linewidth=0.5)
 plt.xlabel("Time(s)", fontsize=16)
 plt.ylabel("Force(N)", fontsize=16, labelpad=10)
 
-plt.yticks(np.arange(-0, 50, step=10))
-plt.ylim(-2, 25)
+# plt.yticks(np.arange(-0, 50, step=10))
+# plt.yticks(np.arange(-20, 61, step=20))
+# plt.ylim(-20, 60)
 
 # 计算力峰值
 print(np.max(force_list[:,2]))
