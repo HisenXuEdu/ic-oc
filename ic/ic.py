@@ -6,7 +6,7 @@ import math
 
 class IC():
     def __init__(self, m=[2, 2, 2, 2, 2, 2], d=[32, 25, 12, 12, 12, 12], k=[128, 128, 100, 5, 5, 5],
-                    initial_pose = [138.360397/1000,-472.066620/1000,407.361847/1000, 179.488663,0.264109,179.605057], forward_force=np.zeros(6)):
+                    initial_pose = [138.360397/1000,-472.066620/1000,407.361847/1000, 179.488663,0.264109,179.605057], forward_force=np.zeros(6), loop_rate=75):
 
         # admittance parameters
         self.M_ = np.diag(m)
@@ -32,7 +32,7 @@ class IC():
 
         # 计算循环的时间间隔
         # loop_rate = 20  # Hz
-        loop_rate = 75 # Hz
+        # loop_rate = 75 # Hz
         self.sec = 1.0 / loop_rate
 
         self.last_error = np.zeros(6)
@@ -131,7 +131,34 @@ class IC():
         error[0:3] = self.arm_desired_pose_[0:3]  - self.desired_pose_position_
         error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
         coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
-        force -= (self.forward_force - self.last_error - 0.1*(error_force - self.le))
+        force -= (self.forward_force - self.last_error - 0.8*(error_force - self.le))
+        arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
+        self.__limit_acc(arm_desired_accelaration)
+        self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
+        # print(self.arm_desired_twist_)
+        # if limit:
+        #     self.__limitv()
+        self.arm_desired_pose_ += self.arm_desired_twist_ * self.sec  #这里应该用arm_desired_twist_+当前速度
+        pose = self.arm_desired_pose_[0:3] 
+        if limit:
+            pose = self.__limit(pose) #这里仅实现了对xyz的限位
+        euler = self.arm_desired_pose_[3:6] 
+        self.last_error = self.last_error + 0.2*error_force
+        self.le = error_force
+        # self.last_error = 0.99*(self.last_error + 0.6*error_force)
+        return pose, euler
+
+
+    def compute_admittance_env_raw(self, force=np.zeros(6),limit=False):
+        error_force = np.zeros(6)
+        if force[2] > 0:
+            error_force = force - self.forward_force
+
+        error = np.zeros(6)
+        error[0:3] = self.arm_desired_pose_[0:3]  - self.desired_pose_position_
+        error[3:6] = self.arm_desired_pose_[3:6] - self.desired_pose_euler_
+        coupling_wrench_arm = np.dot(self.D_, self.arm_desired_twist_) + np.dot(self.K_, error)
+        force -= (self.forward_force - self.last_error)
         arm_desired_accelaration = np.linalg.inv(self.M_) @ (-coupling_wrench_arm + force)
         self.__limit_acc(arm_desired_accelaration)
         self.arm_desired_twist_ += arm_desired_accelaration * self.sec  #进行速度迭代并记录
